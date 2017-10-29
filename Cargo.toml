@@ -1,0 +1,12 @@
+[package]
+name = "cntk"
+version = "0.1.0"
+authors = ["Vlado Boza <vlado@raptorintelligence.com>"]
+
+build = "build.rs"
+
+[dependencies]
+cpp = "0.3.2"
+
+[build-dependencies]
+cpp_build = "0.3.2"
