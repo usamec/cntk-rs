@@ -2,7 +2,7 @@
 name = "cntk"
 description = "Wrapper around Microsoft CNTK library"
 license = "MIT license"
-version = "0.1.0"
+version = "0.0.1"
 authors = ["Vlado Boza <vlado@raptorintelligence.com>"]
 
 build = "build.rs"
