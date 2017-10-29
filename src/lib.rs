@@ -1,13 +1,14 @@
 #[macro_use]
 extern crate cpp;
 
-//mod bindings;
+mod shape;
+pub use shape::Shape;
+
 mod variable;
 pub use variable::*;
 
 mod function;
 pub use function::Function;
-//pub use function::plus;
 
 mod value;
 pub use value::Value;
@@ -23,8 +24,8 @@ mod tests {
     use super::*;
     #[test]
     fn it_works() {
-        let var = Variable::new();
-        let var2 = Variable::new();
+        let var = Variable::input_variable(Shape::from_slice(&vec!(5)));
+        let var2 = Variable::input_variable(Shape::from_slice(&vec!(5)));
         let plus = plus(&var, &var2);
 
 

@@ -9,8 +9,17 @@ Expect a lot of breaking changes.
 
 Build scripts are not ready yet, might not work outside of 64bit linux.
 
-## Plans
+## Other limitations
 
-* Figure out how to pass data in and out.
-* Implement most of graph building functionality. Probably using some sort of code generation.
-Goal is to have either recurrent or seq2seq network training possible.
+Only works with single precision (f32 in Rust, float in C++) types.
+Only works with dense representations of vectors/matrices/tensors.
+
+## Roadmap
+
+* Figure out how to pass data in and out. Currently `Value::batch` for input and `Value::to_vec` should be enough.
+* Variable creation.
+* Gradients.
+* Training simple feed forward net.
+* Training recurrent or seq2seq net.
+* Code for most operations. (probably generated).
+* Write some meaningful examples.

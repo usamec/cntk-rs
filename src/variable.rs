@@ -1,3 +1,5 @@
+use shape::Shape;
+
 cpp! {{
   #include <CNTKLibrary.h>
   #include <cstdio>
@@ -15,15 +17,13 @@ pub struct Variable {
 }
 
 impl Variable {
-    pub fn new() -> Variable {
-        let payload = unsafe {
-            cpp!([] -> VariableInner as "Variable" {
-                auto inputVarName = L"features";
-                const size_t inputDim = 5;
-                return InputVariable({ inputDim }, DataType::Float, inputVarName);
+    pub fn input_variable(shape: Shape) -> Variable {
+        let spayload = shape.payload;
+        Variable { payload: unsafe {
+            cpp!([spayload as "NDShape"] -> VariableInner as "Variable" {
+                return InputVariable(spayload, DataType::Float);
             })
-        };
-        Variable { payload }
+        }}
     }
 }
 
