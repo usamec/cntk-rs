@@ -1,5 +1,7 @@
 [package]
 name = "cntk"
+description = "Wrapper around Microsoft CNTK library"
+license = "MIT license"
 version = "0.1.0"
 authors = ["Vlado Boza <vlado@raptorintelligence.com>"]
 
