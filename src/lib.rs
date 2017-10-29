@@ -45,22 +45,6 @@ mod tests {
             outdatamap.add(&outputvar, &emptyval);
 
             plus.evaluate(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
-
-
-        /*    let oval = Value::empty();
-
-
-            let binding = vec!(
-                              Binding(&var, &val),
-                              Binding(&var2, &val2)
-                              );
-
-            let plusvar = Variable::from(&plus);
-            let mut obinding = vec!(
-                               Binding(&plusvar, &oval)
-                               );
-            println!("eval go");
-            plus.evaluate(&binding, &mut obinding, DeviceDescriptor::cpu());*/
         }
 
     }
