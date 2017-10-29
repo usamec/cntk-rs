@@ -1,5 +1,6 @@
 use variable::Variable;
 use device::DeviceDescriptor;
+use std::ptr;
 
 cpp! {{
   #include <CNTKLibrary.h>
@@ -39,6 +40,26 @@ impl Value {
                 return ptr;
             })
         }}
+    }
+
+    pub fn to_vec(&self) -> Vec<f32> {
+        let payload = self.payload;
+        let total_size = unsafe {
+            cpp!([payload as "ValuePtr"] -> usize as "size_t" {
+                return payload->Data()->Shape().TotalSize();
+            })
+        };
+        let mut buffer: Vec<f32> = Vec::with_capacity(total_size);
+        unsafe { buffer.set_len(total_size); }
+        let data = unsafe {
+            cpp!([payload as "ValuePtr"] -> *const f32 as "const float*" {
+              return payload->Data()->DataBuffer<float>();
+            })
+        };
+        unsafe {
+            ptr::copy(data, buffer.as_mut_ptr(), total_size);
+        }
+        buffer
     }
 }
 

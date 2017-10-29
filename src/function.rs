@@ -19,6 +19,15 @@ pub struct Function {
 }
 
 impl Function {
+    pub fn from_variable(var: &Variable) -> Function {
+        let payload = var.payload;
+        Function { payload: unsafe {
+            cpp!([payload as "Variable"] -> FunctionInner as "FunctionPtr" {
+                return payload;
+            })
+        }}
+    }
+
     pub fn num_outputs(&self) -> usize {
         let payload = self.payload;
         unsafe {
@@ -52,17 +61,6 @@ impl Function {
             })
         };
     }
-}
-
-pub fn plus(x: &Variable, y: &Variable) -> Function {
-    let xpayload = x.payload;
-    let ypayload = y.payload;
-    let payload = unsafe {
-        cpp!([xpayload as "Variable", ypayload as "Variable"] -> FunctionInner as "FunctionPtr" {
-            return Plus(xpayload, ypayload);
-        })
-    };
-    Function {payload}
 }
 
 impl Drop for Function {

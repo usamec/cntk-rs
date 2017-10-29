@@ -27,6 +27,17 @@ impl Variable {
     }
 }
 
+pub fn plus(x: &Variable, y: &Variable) -> Variable {
+    let xpayload = x.payload;
+    let ypayload = y.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
+            return Plus(xpayload, ypayload);
+        })
+    };
+    Variable {payload}
+}
+
 impl Drop for Variable {
     fn drop(&mut self) {
         let payload = self.payload;
