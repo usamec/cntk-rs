@@ -1,4 +1,4 @@
-use shape::Shape;
+use shape::{Shape, ShapeInner};
 
 cpp! {{
   #include <CNTKLibrary.h>
@@ -25,6 +25,24 @@ impl Variable {
             })
         }}
     }
+
+    pub fn input_variable_with_gradient(shape: Shape) -> Variable {
+        let spayload = shape.payload;
+        Variable { payload: unsafe {
+            cpp!([spayload as "NDShape"] -> VariableInner as "Variable" {
+                return InputVariable(spayload, DataType::Float, true);
+            })
+        }}
+    }
+
+    pub fn shape(&self) -> Shape {
+        let payload = self.payload;
+        Shape { payload: unsafe {
+            cpp!([payload as "Variable"] -> ShapeInner as "NDShape" {
+                return payload.Shape();
+            })
+        }}
+    }
 }
 
 pub fn plus(x: &Variable, y: &Variable) -> Variable {
@@ -37,6 +55,18 @@ pub fn plus(x: &Variable, y: &Variable) -> Variable {
     };
     Variable {payload}
 }
+
+pub fn elem_times(x: &Variable, y: &Variable) -> Variable {
+    let xpayload = x.payload;
+    let ypayload = y.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
+            return ElementTimes(xpayload, ypayload);
+        })
+    };
+    Variable {payload}
+}
+
 
 impl Drop for Variable {
     fn drop(&mut self) {

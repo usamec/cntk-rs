@@ -32,4 +32,13 @@ impl Shape {
             })
         }}
     }
+
+    pub fn total_size(&self) -> usize {
+        let payload = self.payload;
+        unsafe {
+            cpp!([payload as "NDShape"] -> usize as "size_t" {
+                return payload.TotalSize();
+            })
+        }
+    }
 }

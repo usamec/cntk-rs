@@ -51,7 +51,7 @@ impl DataMap {
             })
         };
 
-        if (has_var) {
+        if has_var {
             Some(
                 Value { payload: unsafe {
                     cpp!([payload as "unordered_map<Variable, ValuePtr>*", var_payload as "Variable"] -> ValueInner as "ValuePtr" {
@@ -83,12 +83,12 @@ mod tests {
     use value::*;
     use device::*;
 
-    #[test]
+    #[test] #[ignore]
     fn test_create() {
         let map = DataMap::new();
     }
 
-    #[test]
+    #[test] #[ignore]
     fn test_add_and_get() {
         let mut map = DataMap::new();
         let var = Variable::input_variable(Shape::scalar());
@@ -96,7 +96,7 @@ mod tests {
 
         let data: Vec<f32> = vec!(11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 110.0);
 
-        let val = Value::batch(&var, &data, DeviceDescriptor::cpu());
+        let val = Value::batch(&var.shape(), &data, DeviceDescriptor::cpu());
         map.add(&var, &val);
         assert_eq!(map.get(&var).is_some(), true);
         assert_eq!(map.get(&var2).is_some(), false);

@@ -23,3 +23,4 @@ Only works with dense representations of vectors/matrices/tensors.
 * Training recurrent or seq2seq net.
 * Code for most operations. (probably generated).
 * Write some meaningful examples.
+* Catch all relevant C++ exceptions

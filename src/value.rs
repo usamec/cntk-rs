@@ -1,4 +1,4 @@
-use variable::Variable;
+use shape::{Shape, ShapeInner};
 use device::DeviceDescriptor;
 use std::ptr;
 
@@ -19,16 +19,29 @@ pub struct Value {
 }
 
 impl Value {
-    pub fn batch(var: &Variable, data: &[f32], device: DeviceDescriptor) -> Value {
+    pub fn batch(shape: &Shape, data: &[f32], device: DeviceDescriptor) -> Value {
         let data_ptr = data.as_ptr();
         let data_size = data.len();
-        let var_payload = var.payload;
+        let shape_payload = shape.payload;
         let device_payload = device.payload;
         let payload = unsafe {
-            cpp!([var_payload as "Variable", data_ptr as "float*", data_size as "size_t", device_payload as "DeviceDescriptor" ] -> ValueInner as "ValuePtr" {
+            cpp!([shape_payload as "NDShape", data_ptr as "float*", data_size as "size_t", device_payload as "DeviceDescriptor" ] -> ValueInner as "ValuePtr" {
             vector<float> data(data_ptr, data_ptr + data_size);
-            return Value::CreateBatch(var_payload.Shape(), data, device_payload);
+            return Value::CreateBatch(shape_payload, data, device_payload);
         })
+        };
+        Value { payload }
+    }
+
+    pub fn from_vec(shape: &Shape, data: &[f32], device: DeviceDescriptor) -> Value {
+        let data_ptr = data.as_ptr();
+        let data_size = data.len();
+        let shape_payload = shape.payload;
+        let device_payload = device.payload;
+        let payload = unsafe {
+            cpp!([shape_payload as "NDShape", data_ptr as "float*", data_size as "size_t", device_payload as "DeviceDescriptor" ] -> ValueInner as "ValuePtr" {
+                return MakeSharedObject<Value>(MakeSharedObject<NDArrayView>(shape_payload, data_ptr, data_size, device_payload, true)->DeepClone());
+            })
         };
         Value { payload }
     }
@@ -60,6 +73,15 @@ impl Value {
             ptr::copy(data, buffer.as_mut_ptr(), total_size);
         }
         buffer
+    }
+
+    pub fn shape(&self) -> Shape {
+        let payload = self.payload;
+        Shape { payload: unsafe {
+            cpp!([payload as "ValuePtr"] -> ShapeInner as "NDShape" {
+                return payload->Shape();
+            })
+        }}
     }
 }
 
