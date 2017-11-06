@@ -17,10 +17,12 @@ Only works with dense representations of vectors/matrices/tensors.
 ## Roadmap
 
 * Figure out how to pass data in and out. Currently `Value::batch` for input and `Value::to_vec` should be enough.
-* Variable creation.
-* Gradients.
-* Training simple feed forward net.
+* Variable creation. - Some basics are there
+* Gradients. - Possible to do backward pass
+* Training simple feed forward net. - Possible.
 * Training recurrent or seq2seq net.
 * Code for most operations. (probably generated).
 * Write some meaningful examples.
 * Catch all relevant C++ exceptions
+* Save and load model.
+* Better build scripts.

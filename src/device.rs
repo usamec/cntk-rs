@@ -25,3 +25,11 @@ impl DeviceDescriptor {
         }
     }
 }
+
+pub fn set_max_num_cpu_threads(num: usize) {
+    unsafe {
+        cpp!([num as "size_t"] {
+            SetMaxNumCPUThreads(num);
+        })
+    }
+}

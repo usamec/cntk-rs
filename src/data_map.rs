@@ -41,6 +41,17 @@ impl DataMap {
         }
     }
 
+    pub fn add_null(&mut self, variable: &Variable) {
+        let var_payload = variable.payload;
+        let mut payload = self.payload;
+
+        unsafe {
+            cpp!([mut payload as "unordered_map<Variable, ValuePtr>*", var_payload as "Variable"] {
+                payload->insert({var_payload, nullptr});
+            })
+        }
+    }
+
     pub fn get(&self, variable: &Variable) -> Option<Value> {
         let var_payload = variable.payload;
         let payload = self.payload;
@@ -83,12 +94,12 @@ mod tests {
     use value::*;
     use device::*;
 
-    #[test] #[ignore]
+    #[test]
     fn test_create() {
         let map = DataMap::new();
     }
 
-    #[test] #[ignore]
+    #[test]
     fn test_add_and_get() {
         let mut map = DataMap::new();
         let var = Variable::input_variable(Shape::scalar());

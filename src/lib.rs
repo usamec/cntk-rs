@@ -18,15 +18,21 @@ mod value;
 pub use value::Value;
 
 mod device;
-pub use device::DeviceDescriptor;
+pub use device::{DeviceDescriptor, set_max_num_cpu_threads};
 
 mod data_map;
 pub use data_map::DataMap;
 
+mod learner;
+pub use learner::Learner;
+
+mod trainer;
+pub use trainer::Trainer;
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[test] #[ignore]
+    #[test]
     fn simple_add() {
         let var = Variable::input_variable(Shape::from_slice(&vec!(5)));
         let var2 = Variable::input_variable(Shape::from_slice(&vec!(5)));
@@ -98,5 +104,57 @@ mod tests {
 
         assert_eq!(result.get(&var2).unwrap().to_vec(), vec!(4., 7.));
         assert_eq!(result.get(&var3).unwrap().to_vec(), vec!(1., 1.));
+    }
+
+    fn rng_next(seed: &mut i32) -> f32 {
+        let ret = (*seed % 201 - 100) as f32 / 100.0;
+        *seed = seed.wrapping_mul(23);
+        ret
+    }
+
+    #[test]
+    fn feedforward_net_training() {
+        set_max_num_cpu_threads(1);
+        let x = Variable::input_variable(Shape::from_slice(&vec!(3)));
+        let y = Variable::input_variable(Shape::from_slice(&vec!(1)));
+        let w1 = Variable::parameter(Shape::from_slice(&vec!(20, 3)), DeviceDescriptor::cpu());
+        let b1 = Variable::parameter(Shape::from_slice(&vec!(20)), DeviceDescriptor::cpu());
+        let w2 = Variable::parameter(Shape::from_slice(&vec!(1, 20)), DeviceDescriptor::cpu());
+        let b2 = Variable::parameter(Shape::from_slice(&vec!(1)), DeviceDescriptor::cpu());
+
+        let hidden_value = tanh(&plus(&times(&w1, &x), &b1));
+        let output_value = plus(&times(&w2, &hidden_value), &b2);
+        let error = reduce_sum_all(&squared_error(&output_value, &y));
+
+        let predict_func = Function::combine(&vec!(&output_value, &error));
+        let output_func = Function::from_variable(&output_value);
+        let error_func = Function::from_variable(&error);
+
+        let mut rng_seed = 47;
+
+        let learner = Learner::sgd(&vec!(&w1, &b1, &w2, &b2));
+        let trainer = Trainer::new(&output_func, &error_func, &learner);
+        let mut lastloss = 1000000.0;
+
+        for iter in 0..50000 {
+            let data = vec!(rng_next(&mut rng_seed), rng_next(&mut rng_seed), rng_next(&mut rng_seed),
+                            rng_next(&mut rng_seed), rng_next(&mut rng_seed), rng_next(&mut rng_seed));
+            let odata = vec!(data[0]*data[1] + data[2],
+                             data[3]*data[4] + data[5]);
+            let value = Value::batch(&x.shape(), &data, DeviceDescriptor::cpu());
+            let ovalue = Value::batch(&y.shape(), &odata, DeviceDescriptor::cpu());
+            let mut datamap = DataMap::new();
+            datamap.add(&x, &value);
+            datamap.add(&y, &ovalue);
+            let mut outdatamap = DataMap::new();
+            outdatamap.add_null(&output_value);
+            outdatamap.add_null(&error);
+
+            trainer.train_minibatch(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
+            let result = outdatamap.get(&output_value).unwrap().to_vec();
+            let loss = outdatamap.get(&error).unwrap().to_vec();
+            lastloss = loss[0];
+        }
+        assert!(lastloss < 0.1);
     }
 }

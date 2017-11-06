@@ -56,12 +56,12 @@ mod tests {
     use super::*;
     use variable::*;
 
-    #[test] #[ignore]
+    #[test]
     fn test_create() {
         let set = VariableSet::new();
     }
 
-    #[test] #[ignore]
+    #[test]
     fn test_add() {
         let mut set = VariableSet::new();
         let var = Variable::input_variable(Shape::scalar());

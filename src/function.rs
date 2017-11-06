@@ -35,6 +35,17 @@ impl Function {
         }}
     }
 
+    pub fn combine(variables: &[&Variable]) -> Function {
+        let data: Vec<Variable> = variables.iter().map(|&x| x.clone()).collect();
+        let data_ptr = data.as_ptr();
+        let data_size = data.len();
+        Function { payload: unsafe {
+            cpp!([data_ptr as "Variable*", data_size as "size_t"] -> FunctionInner as "FunctionPtr" {
+                return Combine(vector<Variable>(data_ptr, data_ptr + data_size));
+            })
+        }}
+    }
+
     pub fn num_outputs(&self) -> usize {
         let payload = self.payload;
         unsafe {
@@ -96,7 +107,6 @@ impl Function {
                 payload->Backward(bppayload, *gpayload, *opayload);
             })
         };
-
     }
 }
 
