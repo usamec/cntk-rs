@@ -119,10 +119,10 @@ mod tests {
         set_max_num_cpu_threads(1);
         let x = Variable::input_variable_with_name(Shape::from_slice(&vec!(3)), "X");
         let y = Variable::input_variable_with_name(Shape::from_slice(&vec!(1)), "Y");
-        let w1 = Variable::parameter(Shape::from_slice(&vec!(20, 3)), DeviceDescriptor::cpu());
-        let b1 = Variable::parameter(Shape::from_slice(&vec!(20)), DeviceDescriptor::cpu());
-        let w2 = Variable::parameter(Shape::from_slice(&vec!(1, 20)), DeviceDescriptor::cpu());
-        let b2 = Variable::parameter(Shape::from_slice(&vec!(1)), DeviceDescriptor::cpu());
+        let w1 = Variable::parameter(Shape::from_slice(&vec!(20, 3)), ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
+        let b1 = Variable::parameter(Shape::from_slice(&vec!(20)), ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
+        let w2 = Variable::parameter(Shape::from_slice(&vec!(1, 20)), ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
+        let b2 = Variable::parameter(Shape::from_slice(&vec!(1)), ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
 
         let hidden_value = tanh(&plus(&times(&w1, &x), &b1));
         let output_value = named_alias(&plus(&times(&w2, &hidden_value), &b2), "output");
@@ -192,10 +192,10 @@ mod tests {
         set_max_num_cpu_threads(1);
         let x = Variable::input_variable(Shape::from_slice(&vec!(2)));
         let y = Variable::input_variable(Shape::from_slice(&vec!(3)));
-        let w1 = Variable::parameter(Shape::from_slice(&vec!(20, 2)), DeviceDescriptor::cpu());
-        let b1 = Variable::parameter(Shape::from_slice(&vec!(20)), DeviceDescriptor::cpu());
-        let w2 = Variable::parameter(Shape::from_slice(&vec!(3, 20)), DeviceDescriptor::cpu());
-        let b2 = Variable::parameter(Shape::from_slice(&vec!(3)), DeviceDescriptor::cpu());
+        let w1 = Variable::parameter(Shape::from_slice(&vec!(20, 2)), ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
+        let b1 = Variable::parameter(Shape::from_slice(&vec!(20)), ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
+        let w2 = Variable::parameter(Shape::from_slice(&vec!(3, 20)), ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
+        let b2 = Variable::parameter(Shape::from_slice(&vec!(3)), ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
 
         let hidden_value = tanh(&plus(&times(&w1, &x), &b1));
         let output_value = plus(&times(&w2, &hidden_value), &b2);

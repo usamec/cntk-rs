@@ -10,6 +10,78 @@ cpp! {{
   using namespace std;
 }}
 
+type ParameterInitializerInner = [u64; 2usize];
+
+pub struct ParameterInitializer {
+    payload: ParameterInitializerInner
+}
+
+impl ParameterInitializer {
+    pub fn constant(value: f64) -> ParameterInitializer {
+        ParameterInitializer {payload: unsafe {
+            cpp!([value as "double"] -> ParameterInitializerInner as "ParameterInitializer" {
+                return ConstantInitializer(value);
+            })
+        }}
+    }
+
+    pub fn uniform(scale: f64) -> ParameterInitializer {
+        ParameterInitializer {payload: unsafe {
+            cpp!([scale as "double"] -> ParameterInitializerInner as "ParameterInitializer" {
+                return UniformInitializer(scale);
+            })
+        }}
+    }
+
+    pub fn normal(scale: f64) -> ParameterInitializer {
+        ParameterInitializer {payload: unsafe {
+            cpp!([scale as "double"] -> ParameterInitializerInner as "ParameterInitializer" {
+                return NormalInitializer(scale);
+            })
+        }}
+    }
+
+    pub fn xavier() -> ParameterInitializer {
+        ParameterInitializer {payload: unsafe {
+            cpp!([] -> ParameterInitializerInner as "ParameterInitializer" {
+                return XavierInitializer();
+            })
+        }}
+    }
+
+    pub fn glorot_uniform() -> ParameterInitializer {
+        ParameterInitializer {payload: unsafe {
+            cpp!([] -> ParameterInitializerInner as "ParameterInitializer" {
+                return GlorotUniformInitializer();
+            })
+        }}
+    }
+
+    pub fn glorot_normal() -> ParameterInitializer {
+        ParameterInitializer {payload: unsafe {
+            cpp!([] -> ParameterInitializerInner as "ParameterInitializer" {
+                return GlorotNormalInitializer();
+            })
+        }}
+    }
+
+    pub fn he_uniform() -> ParameterInitializer {
+        ParameterInitializer {payload: unsafe {
+            cpp!([] -> ParameterInitializerInner as "ParameterInitializer" {
+                return HeUniformInitializer();
+            })
+        }}
+    }
+
+    pub fn he_normal() -> ParameterInitializer {
+        ParameterInitializer {payload: unsafe {
+            cpp!([] -> ParameterInitializerInner as "ParameterInitializer" {
+                return HeNormalInitializer();
+            })
+        }}
+    }
+}
+
 pub(super) type VariableInner = [u64; 5usize];
 
 #[derive(Debug)]
@@ -50,12 +122,13 @@ impl Variable {
         }}
     }
 
-    pub fn parameter(shape: Shape, device: DeviceDescriptor) -> Variable {
+    pub fn parameter(shape: Shape, initializer: ParameterInitializer, device: DeviceDescriptor) -> Variable {
         let spayload = shape.payload;
         let dpayload = device.payload;
+        let initializerpayload = initializer.payload;
         Variable { payload: unsafe {
-            cpp!([spayload as "NDShape", dpayload as "DeviceDescriptor"] -> VariableInner as "Variable" {
-                return Parameter(spayload, DataType::Float, GlorotUniformInitializer(), dpayload);
+            cpp!([spayload as "NDShape", dpayload as "DeviceDescriptor", initializerpayload as "ParameterInitializer"] -> VariableInner as "Variable" {
+                return Parameter(spayload, DataType::Float, initializerpayload, dpayload);
             })
         }}
     }
