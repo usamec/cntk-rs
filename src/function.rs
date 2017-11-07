@@ -1,6 +1,7 @@
 use variable::{Variable, VariableInner};
 use variable_set::VariableSet;
 use data_map::DataMap;
+use replacement_map::ReplacementMap;
 use device::DeviceDescriptor;
 
 cpp! {{
@@ -174,6 +175,16 @@ impl Function {
             })
         }
         output
+    }
+
+    pub fn replace_placeholders(self, placeholder_replacements: &ReplacementMap) -> Function {
+        let payload = self.payload;
+        let repl_payload = placeholder_replacements.payload;
+        Function {payload: unsafe {
+            cpp!([payload as "FunctionPtr", repl_payload as "unordered_map<Variable, Variable>*"] -> FunctionInner as "FunctionPtr" {
+                return payload->ReplacePlaceholders(*repl_payload);
+            })
+        }}
     }
 }
 

@@ -7,8 +7,10 @@ pub use shape::Shape;
 mod variable_set;
 pub use variable_set::VariableSet;
 
-pub mod variable;
-pub use variable::{Variable};
+mod variable;
+pub use variable::{Variable, ParameterInitializer};
+
+pub mod ops;
 
 mod function;
 pub use function::Function;
@@ -23,6 +25,9 @@ pub use device::{DeviceDescriptor, set_max_num_cpu_threads};
 mod data_map;
 pub use data_map::DataMap;
 
+mod replacement_map;
+pub use replacement_map::ReplacementMap;
+
 mod learner;
 pub use learner::{Learner, DoubleParameterSchedule};
 
@@ -33,7 +38,7 @@ pub use trainer::Trainer;
 mod tests {
     use super::*;
 
-    use variable::*;
+    use ops::*;
     #[test]
     fn simple_add() {
         let var = Variable::input_variable(Shape::from_slice(&vec!(5)));
@@ -244,5 +249,46 @@ mod tests {
             lastloss = lastloss * 0.9 + 0.1*loss_val[0];
         }
         assert!(lastloss < 0.5);
+    }
+
+    #[test]
+    fn simple_recurrence() {
+        let x = Variable::input_variable(Shape::from_slice(&vec!(2)));
+        let y = Variable::input_variable(Shape::from_slice(&vec!(2)));
+        let placeholder = Variable::placeholder(Shape::from_slice(&vec!(2)));
+        let output = plus(&placeholder, &elem_times(&x, &y));
+        let placeholder_replacement = past_value(&output);
+
+        let mut replacement_map = ReplacementMap::new();
+        replacement_map.add(&placeholder, &placeholder_replacement);
+
+        let output_function = Function::from_variable(&output).replace_placeholders(&replacement_map);
+
+        let last_output = last(&output_function.outputs()[0]);
+        let last_output_function = Function::from_variable(&last_output);
+
+        let data: Vec<f32> = vec!(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0);
+        let data2: Vec<f32> = vec!(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 100.0);
+
+        let val = Value::sequence(&x.shape(), &data, DeviceDescriptor::cpu());
+        let val2 = Value::sequence(&y.shape(), &data2, DeviceDescriptor::cpu());
+
+        let mut datamap = DataMap::new();
+        datamap.add(&x, &val);
+        datamap.add(&y, &val2);
+
+        let mut outdatamap = DataMap::new();
+        outdatamap.add_null(&output);
+
+        output_function.evaluate(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
+
+        let result = outdatamap.get(&output).unwrap().to_vec();
+        assert_eq!(result, vec!(1., 4., 10., 20., 35., 56., 84., 120., 165., 1120.));
+
+        let mut outdatamap_last = DataMap::new();
+        outdatamap_last.add_null(&last_output);
+        last_output_function.evaluate(&datamap, &mut outdatamap_last, DeviceDescriptor::cpu());
+        let result_last = outdatamap_last.get(&last_output).unwrap().to_vec();
+        assert_eq!(result_last, vec!(165., 1120.));
     }
 }

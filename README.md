@@ -28,7 +28,7 @@ Only works with ASCII strings for variable names and filenames.
 * Gradients. - Possible to do backward pass
 * Training simple feed forward net. - Possible.
 * Save and load model. - Possible.
-* Training recurrent or seq2seq net.
+* Training recurrent or seq2seq net. - Recurrences are possible.
 * Code for most operations. (probably generated).
 * Write some meaningful examples. - Only in tests now.
 * Catch all relevant C++ exceptions

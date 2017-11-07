@@ -33,6 +33,20 @@ impl Value {
         Value { payload }
     }
 
+    pub fn sequence(shape: &Shape, data: &[f32], device: DeviceDescriptor) -> Value {
+        let data_ptr = data.as_ptr();
+        let data_size = data.len();
+        let shape_payload = shape.payload;
+        let device_payload = device.payload;
+        let payload = unsafe {
+            cpp!([shape_payload as "NDShape", data_ptr as "float*", data_size as "size_t", device_payload as "DeviceDescriptor" ] -> ValueInner as "ValuePtr" {
+            vector<float> data(data_ptr, data_ptr + data_size);
+            return Value::CreateSequence(shape_payload, data, device_payload);
+        })
+        };
+        Value { payload }
+    }
+
     pub fn from_vec(shape: &Shape, data: &[f32], device: DeviceDescriptor) -> Value {
         let data_ptr = data.as_ptr();
         let data_size = data.len();
