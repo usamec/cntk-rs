@@ -107,7 +107,7 @@ mod tests {
     }
 
     fn rng_next(seed: &mut i32) -> f32 {
-        let ret = (*seed % 201 - 100) as f32 / 100.0;
+        let ret = (((*seed % 201)+201)%201 - 100) as f32 / 100.0;
         *seed = seed.wrapping_mul(23);
         ret
     }
@@ -126,7 +126,6 @@ mod tests {
         let output_value = plus(&times(&w2, &hidden_value), &b2);
         let error = reduce_sum_all(&squared_error(&output_value, &y));
 
-        let predict_func = Function::combine(&vec!(&output_value, &error));
         let output_func = Function::from_variable(&output_value);
         let error_func = Function::from_variable(&error);
 
@@ -136,7 +135,7 @@ mod tests {
         let trainer = Trainer::new(&output_func, &error_func, &learner);
         let mut lastloss = 1000000.0;
 
-        for iter in 0..50000 {
+        for iter in 0..5000 {
             let data = vec!(rng_next(&mut rng_seed), rng_next(&mut rng_seed), rng_next(&mut rng_seed),
                             rng_next(&mut rng_seed), rng_next(&mut rng_seed), rng_next(&mut rng_seed));
             let odata = vec!(data[0]*data[1] + data[2],
@@ -156,5 +155,64 @@ mod tests {
             lastloss = loss[0];
         }
         assert!(lastloss < 0.1);
+    }
+
+    #[test]
+    fn classification_net_training() {
+        set_max_num_cpu_threads(1);
+        let x = Variable::input_variable(Shape::from_slice(&vec!(2)));
+        let y = Variable::input_variable(Shape::from_slice(&vec!(3)));
+        let w1 = Variable::parameter(Shape::from_slice(&vec!(20, 2)), DeviceDescriptor::cpu());
+        let b1 = Variable::parameter(Shape::from_slice(&vec!(20)), DeviceDescriptor::cpu());
+        let w2 = Variable::parameter(Shape::from_slice(&vec!(3, 20)), DeviceDescriptor::cpu());
+        let b2 = Variable::parameter(Shape::from_slice(&vec!(3)), DeviceDescriptor::cpu());
+
+        let hidden_value = tanh(&plus(&times(&w1, &x), &b1));
+        let output_value = plus(&times(&w2, &hidden_value), &b2);
+        let loss = reduce_sum_all(&cross_entropy_with_softmax(&output_value, &y));
+        let wrong_labels = reduce_sum_all(&classification_error(&output_value, &y));
+
+
+        let output_func = Function::from_variable(&output_value);
+        let loss_func = Function::from_variable(&loss);
+        let wrong_labels_func = Function::from_variable(&wrong_labels);
+
+        let mut rng_seed = 47;
+
+        let learner = Learner::sgd(&vec!(&w1, &b1, &w2, &b2));
+        let trainer = Trainer::new_with_evalatuion(&output_func, &loss_func, &wrong_labels_func, &learner);
+        let mut lastloss = 1000000.0;
+
+        for iter in 0..50000 {
+            let data = vec!(rng_next(&mut rng_seed), rng_next(&mut rng_seed), rng_next(&mut rng_seed),
+                           rng_next(&mut rng_seed));
+            let r1 = data[0]*data[0] + data[1]*data[1];
+            let r2 = data[2]*data[2] + data[3]*data[3];
+
+            let odata = vec!(if (r1 < 0.3) {1.0} else {0.0},
+                             if (r1 >= 0.3 && r1 < 0.6) {1.0} else {0.0},
+                             if (r1 >= 0.6) {1.0} else {0.0},
+                             if (r2 < 0.3) {1.0} else {0.0},
+                             if (r2 >= 0.3 && r2 < 0.6) {1.0} else {0.0},
+                             if (r2 >= 0.6) {1.0} else {0.0}
+                            );
+
+            let value = Value::batch(&x.shape(), &data, DeviceDescriptor::cpu());
+            let ovalue = Value::batch(&y.shape(), &odata, DeviceDescriptor::cpu());
+            let mut datamap = DataMap::new();
+            datamap.add(&x, &value);
+            datamap.add(&y, &ovalue);
+            let mut outdatamap = DataMap::new();
+            outdatamap.add_null(&output_value);
+            outdatamap.add_null(&loss);
+            outdatamap.add_null(&wrong_labels);
+
+            trainer.train_minibatch(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
+            let result = outdatamap.get(&output_value).unwrap().to_vec();
+            let loss_val = outdatamap.get(&loss).unwrap().to_vec();
+            let wrong_labels_val = outdatamap.get(&wrong_labels).unwrap().to_vec();
+            lastloss = lastloss * 0.9 + 0.1*loss_val[0];
+        }
+        assert!(lastloss < 0.5);
     }
 }

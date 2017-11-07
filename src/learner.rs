@@ -24,7 +24,7 @@ impl Learner {
         let data_size = data.len();
         Learner { payload: unsafe {
             cpp!([data_ptr as "Parameter*", data_size as "size_t"] -> LearnerInner as "LearnerPtr" {
-                return SGDLearner(vector<Parameter>(data_ptr, data_ptr + data_size), TrainingParameterPerSampleSchedule(0.001));
+                return SGDLearner(vector<Parameter>(data_ptr, data_ptr + data_size), TrainingParameterPerSampleSchedule(0.01));
             })
         }}
     }

@@ -89,12 +89,34 @@ pub fn times(x: &Variable, y: &Variable) -> Variable {
     Variable {payload}
 }
 
+pub fn cross_entropy_with_softmax(x: &Variable, y: &Variable) -> Variable {
+    let xpayload = x.payload;
+    let ypayload = y.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
+            return CrossEntropyWithSoftmax(xpayload, ypayload);
+        })
+    };
+    Variable {payload}
+}
+
 pub fn squared_error(x: &Variable, y: &Variable) -> Variable {
     let xpayload = x.payload;
     let ypayload = y.payload;
     let payload = unsafe {
         cpp!([xpayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
             return SquaredError(xpayload, ypayload);
+        })
+    };
+    Variable {payload}
+}
+
+pub fn classification_error(x: &Variable, y: &Variable) -> Variable {
+    let xpayload = x.payload;
+    let ypayload = y.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
+            return ClassificationError(xpayload, ypayload);
         })
     };
     Variable {payload}
@@ -119,6 +141,7 @@ pub fn reduce_sum_all(x: &Variable) -> Variable {
     };
     Variable {payload}
 }
+
 
 impl Clone for Variable {
     fn clone(&self) -> Self {

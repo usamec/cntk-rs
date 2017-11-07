@@ -32,6 +32,18 @@ impl Trainer {
         }}
     }
 
+    pub fn new_with_evalatuion(model: &Function, loss: &Function, evaluation: &Function, learner: &Learner) -> Trainer {
+        let modelpayload = model.payload;
+        let losspayload = loss.payload;
+        let learnerpayload = learner.payload;
+        let evaluationpayload = evaluation.payload;
+        Trainer { payload: unsafe {
+            cpp!([modelpayload as "FunctionPtr", losspayload as "FunctionPtr", evaluationpayload as "FunctionPtr", learnerpayload as "LearnerPtr"] -> TrainerInner as "TrainerPtr"{
+                return CreateTrainer(modelpayload, losspayload, evaluationpayload, { learnerpayload });
+            })
+        }}
+    }
+
     pub fn train_minibatch(&self, arguments: &DataMap, outputs_to_fetch: &mut DataMap, device: DeviceDescriptor) {
         let payload = self.payload;
         let impayload = arguments.payload;
