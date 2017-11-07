@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="API documentation for the Rust `BackPropState` struct in crate `cntk`.">
-    <meta name="keywords" content="rust, rustlang, rust-lang, BackPropState">
+    <meta name="description" content="API documentation for the Rust `ReplacementMap` struct in crate `cntk`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, ReplacementMap">
 
-    <title>cntk::BackPropState - Rust</title>
+    <title>cntk::ReplacementMap - Rust</title>
 
     <link rel="stylesheet" type="text/css" href="../normalize.css">
     <link rel="stylesheet" type="text/css" href="../rustdoc.css">
@@ -29,7 +29,7 @@
 
     <nav class="sidebar">
         
-        <p class='location'>Struct BackPropState</p><div class="block items"><ul><li><a href="#implementations">Trait Implementations</a></li></ul></div><p class='location'><a href='index.html'>cntk</a></p><script>window.sidebarCurrent = {name: 'BackPropState', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+        <p class='location'>Struct ReplacementMap</p><div class="block items"><ul><li><a href="#methods">Methods</a></li><li><a href="#implementations">Trait Implementations</a></li></ul></div><p class='location'><a href='index.html'>cntk</a></p><script>window.sidebarCurrent = {name: 'ReplacementMap', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
     </nav>
 
     <nav class="sub">
@@ -44,12 +44,18 @@
     </nav>
 
     <section id='main' class="content">
-<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>cntk</a>::<wbr><a class="struct" href=''>BackPropState</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>cntk</a>::<wbr><a class="struct" href=''>ReplacementMap</a></span><span class='out-of-band'><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a class='srclink' href='../src/cntk/function.rs.html#25-27' title='goto source code'>[src]</a></span></h1>
-<pre class='rust struct'>pub struct BackPropState { /* fields omitted */ }</pre><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html" title="trait core::ops::drop::Drop">Drop</a> for <a class="struct" href="../cntk/struct.BackPropState.html" title="struct cntk::BackPropState">BackPropState</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/cntk/function.rs.html#202-211' title='goto source code'>[src]</a></span></h3>
+               </span><a class='srclink' href='../src/cntk/replacement_map.rs.html#17-19' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct ReplacementMap { /* fields omitted */ }</pre><div class='docblock'><p>Wrapper around unordered_map<Variable, Variable> to pass replacement for placeholders</p>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl <a class="struct" href="../cntk/struct.ReplacementMap.html" title="struct cntk::ReplacementMap">ReplacementMap</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/cntk/replacement_map.rs.html#21-45' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class="method"><span id='new.v' class='invisible'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class="struct" href="../cntk/struct.ReplacementMap.html" title="struct cntk::ReplacementMap">ReplacementMap</a></code></span></h4>
+<div class='docblock'><p>Creates an empty ReplacementMap</p>
+</div><h4 id='method.add' class="method"><span id='add.v' class='invisible'><code>fn <a href='#method.add' class='fnname'>add</a>(&amp;mut self, variable: &amp;<a class="struct" href="../cntk/struct.Variable.html" title="struct cntk::Variable">Variable</a>, replacement: &amp;<a class="struct" href="../cntk/struct.Variable.html" title="struct cntk::Variable">Variable</a>)</code></span></h4>
+<div class='docblock'><p>Adds mapping to ReplacementMap. If mapping for given Variable exists, it will be overwritten.</p>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html" title="trait core::ops::drop::Drop">Drop</a> for <a class="struct" href="../cntk/struct.ReplacementMap.html" title="struct cntk::ReplacementMap">ReplacementMap</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/cntk/replacement_map.rs.html#47-56' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'><h4 id='method.drop' class="method"><span id='drop.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html#tymethod.drop' class='fnname'>drop</a>(&amp;mut self)</code></span></h4>
 <div class='docblock'><p>A method called when the value goes out of scope. <a href="https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html#tymethod.drop">Read more</a></p>
 </div></div></section>
