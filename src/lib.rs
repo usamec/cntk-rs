@@ -7,8 +7,8 @@ pub use shape::Shape;
 mod variable_set;
 pub use variable_set::VariableSet;
 
-mod variable;
-pub use variable::*;
+pub mod variable;
+pub use variable::{Variable};
 
 mod function;
 pub use function::Function;
@@ -24,7 +24,7 @@ mod data_map;
 pub use data_map::DataMap;
 
 mod learner;
-pub use learner::Learner;
+pub use learner::{Learner, DoubleParameterSchedule};
 
 mod trainer;
 pub use trainer::Trainer;
@@ -32,6 +32,8 @@ pub use trainer::Trainer;
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    use variable::*;
     #[test]
     fn simple_add() {
         let var = Variable::input_variable(Shape::from_slice(&vec!(5)));
@@ -131,7 +133,7 @@ mod tests {
 
         let mut rng_seed = 47;
 
-        let learner = Learner::sgd(&vec!(&w1, &b1, &w2, &b2));
+        let learner = Learner::sgd(&vec!(&w1, &b1, &w2, &b2), &DoubleParameterSchedule::constant(0.01));
         let trainer = Trainer::new(&output_func, &error_func, &learner);
         let mut lastloss = 1000000.0;
 
@@ -207,7 +209,7 @@ mod tests {
 
         let mut rng_seed = 47;
 
-        let learner = Learner::sgd(&vec!(&w1, &b1, &w2, &b2));
+        let learner = Learner::sgd(&vec!(&w1, &b1, &w2, &b2), &DoubleParameterSchedule::constant(0.01));
         let trainer = Trainer::new_with_evalatuion(&output_func, &loss_func, &wrong_labels_func, &learner);
         let mut lastloss = 1000000.0;
 

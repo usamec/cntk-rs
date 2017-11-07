@@ -13,11 +13,13 @@ cpp! {{
 
 type VariableSetInner = [u64; 1usize];
 
+/// Wrapper around unordered_set<Variable>
 pub struct VariableSet {
     pub(super) payload: *mut VariableSetInner
 }
 
 impl VariableSet {
+    /// Creates empty VariableSet
     pub fn new() -> VariableSet {
         VariableSet {
             payload: unsafe {
@@ -28,6 +30,7 @@ impl VariableSet {
         }
     }
 
+    /// Adds Variable to set
     pub fn add(&mut self, variable: &Variable) {
         let var_payload = variable.payload;
         let mut payload = self.payload;

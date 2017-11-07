@@ -69,6 +69,15 @@ impl Variable {
         }}
     }
 
+    pub fn is_parameter(&self) -> bool {
+        let payload = self.payload;
+        unsafe {
+            cpp!([payload as "Variable"] -> bool as "bool" {
+                return payload.IsParameter();
+            })
+        }
+    }
+
     pub fn name(&self) -> String {
         let payload = self.payload;
         let name_size = unsafe {

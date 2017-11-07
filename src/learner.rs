@@ -9,6 +9,33 @@ cpp! {{
   using namespace std;
 }}
 
+type DoubleParameterScheduleInner = [u64; 9usize];
+
+pub struct DoubleParameterSchedule {
+    pub(super) payload: DoubleParameterScheduleInner
+}
+
+impl DoubleParameterSchedule {
+    pub fn constant(x: f64) -> DoubleParameterSchedule {
+        DoubleParameterSchedule {payload: unsafe {
+            cpp!([x as "double"] -> DoubleParameterScheduleInner as "TrainingParameterSchedule<double>" {
+                return TrainingParameterPerSampleSchedule(x);
+            })
+        }}
+    }
+}
+
+impl Drop for DoubleParameterSchedule {
+    fn drop(&mut self) {
+        let payload = self.payload;
+        unsafe {
+            cpp!([payload as "TrainingParameterSchedule<double>"] {
+                payload.~TrainingParameterSchedule();
+            })
+        };
+    }
+}
+
 type LearnerInner = [u64; 2usize];
 
 #[derive(Debug)]
@@ -17,14 +44,46 @@ pub struct Learner {
 }
 
 impl Learner {
-    pub fn sgd(parameters: &[&Variable]) -> Learner {
-        // TODO: assert all parameters are really parameters
+    pub fn sgd(parameters: &[&Variable], learning_rate_schedule: &DoubleParameterSchedule) -> Learner {
+        check_parameters(parameters);
+
         let data: Vec<Variable> = parameters.iter().map(|&x| x.clone()).collect();
         let data_ptr = data.as_ptr();
         let data_size = data.len();
+        let schedule = learning_rate_schedule.payload;
         Learner { payload: unsafe {
-            cpp!([data_ptr as "Parameter*", data_size as "size_t"] -> LearnerInner as "LearnerPtr" {
-                return SGDLearner(vector<Parameter>(data_ptr, data_ptr + data_size), TrainingParameterPerSampleSchedule(0.01));
+            cpp!([data_ptr as "Parameter*", data_size as "size_t", schedule as "TrainingParameterSchedule<double>"] -> LearnerInner as "LearnerPtr" {
+                return SGDLearner(vector<Parameter>(data_ptr, data_ptr + data_size), schedule);
+            })
+        }}
+    }
+
+    pub fn momentum_sgd(parameters: &[&Variable], learning_rate_schedule: &DoubleParameterSchedule, momentum_schedule: &DoubleParameterSchedule) -> Learner {
+        check_parameters(parameters);
+
+        let data: Vec<Variable> = parameters.iter().map(|&x| x.clone()).collect();
+        let data_ptr = data.as_ptr();
+        let data_size = data.len();
+        let schedule = learning_rate_schedule.payload;
+        let mschedule = momentum_schedule.payload;
+        Learner { payload: unsafe {
+            cpp!([data_ptr as "Parameter*", data_size as "size_t", schedule as "TrainingParameterSchedule<double>", mschedule as "TrainingParameterSchedule<double>"] -> LearnerInner as "LearnerPtr" {
+                return MomentumSGDLearner(vector<Parameter>(data_ptr, data_ptr + data_size), schedule, mschedule);
+            })
+        }}
+    }
+
+    pub fn adam(parameters: &[&Variable], learning_rate_schedule: &DoubleParameterSchedule, momentum_schedule: &DoubleParameterSchedule) -> Learner {
+        check_parameters(parameters);
+
+        let data: Vec<Variable> = parameters.iter().map(|&x| x.clone()).collect();
+        let data_ptr = data.as_ptr();
+        let data_size = data.len();
+        let schedule = learning_rate_schedule.payload;
+        let mschedule = momentum_schedule.payload;
+        Learner { payload: unsafe {
+            cpp!([data_ptr as "Parameter*", data_size as "size_t", schedule as "TrainingParameterSchedule<double>", mschedule as "TrainingParameterSchedule<double>"] -> LearnerInner as "LearnerPtr" {
+                return AdamLearner(vector<Parameter>(data_ptr, data_ptr + data_size), schedule, mschedule);
             })
         }}
     }
@@ -38,5 +97,11 @@ impl Drop for Learner {
                 payload.~LearnerPtr();
             })
         };
+    }
+}
+
+fn check_parameters(parameters: &[&Variable]) {
+    for parameter in parameters {
+        assert!(parameter.is_parameter());
     }
 }

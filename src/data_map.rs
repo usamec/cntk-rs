@@ -14,11 +14,13 @@ cpp! {{
 
 type DataMapInner = [u64; 1usize];
 
+/// Wrapper around unordered_map<Variable, Value> to pass bindings to Function evaluation
 pub struct DataMap {
     pub(super) payload: *mut DataMapInner
 }
 
 impl DataMap {
+    /// Creates an empty DataMap
     pub fn new() -> DataMap {
         DataMap {
             payload: unsafe {
@@ -29,6 +31,7 @@ impl DataMap {
         }
     }
 
+    /// Adds binding to DataMap. If mapping for given Variable exists, it will be overwritten.
     pub fn add(&mut self, variable: &Variable, value: &Value) {
         let var_payload = variable.payload;
         let val_payload = value.payload;
@@ -41,6 +44,7 @@ impl DataMap {
         }
     }
 
+    /// Adds binding to null to DataMap. Useful, when we want function evaluation to create the Value.
     pub fn add_null(&mut self, variable: &Variable) {
         let var_payload = variable.payload;
         let mut payload = self.payload;
