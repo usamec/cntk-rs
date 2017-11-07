@@ -108,6 +108,73 @@ impl Function {
             })
         };
     }
+
+    pub fn save(&self, path: &str) {
+        let path_ptr = path.as_ptr();
+        let path_len = path.len();
+        let payload = self.payload;
+        unsafe {
+            cpp!([payload as "FunctionPtr", path_ptr as "char*", path_len as "size_t"] {
+                string path(path_ptr, path_ptr + path_len);
+                wstring wpath;
+                wpath.assign(path.begin(), path.end());
+                payload->Save(wpath);
+            })
+        }
+    }
+
+    pub fn load(path: &str, device: DeviceDescriptor) -> Function {
+        let path_ptr = path.as_ptr();
+        let path_len = path.len();
+        let dpayload = device.payload;
+        Function {payload: unsafe {
+            cpp!([path_ptr as "char*", path_len as "size_t", dpayload as "DeviceDescriptor"] -> FunctionInner as "FunctionPtr" {
+                string path(path_ptr, path_ptr + path_len);
+                wstring wpath;
+                wpath.assign(path.begin(), path.end());
+                return Function::Load(wpath, dpayload);
+            })
+        }}
+    }
+
+    pub fn num_inputs(&self) -> usize {
+        let payload = self.payload;
+        unsafe {
+            cpp!([payload as "FunctionPtr"] -> usize as "size_t" {
+                return payload->Inputs().size();
+            })
+        }
+    }
+
+    pub fn inputs(&self) -> Vec<Variable> {
+        let payload = self.payload;
+        let num_inputs = self.num_inputs();
+        let mut output = Vec::with_capacity(num_inputs);
+        unsafe {
+            output.set_len(num_inputs);
+            let mut ptr = output.as_mut_ptr();
+            cpp!([payload as "FunctionPtr", mut ptr as "Variable*"] {
+                auto outputs = payload->Inputs();
+                copy(outputs.begin(), outputs.end(), ptr);
+            })
+        }
+        output
+    }
+
+    pub fn outputs(&self) -> Vec<Variable> {
+        let payload = self.payload;
+        let num_outputs = self.num_outputs();
+        let mut output = Vec::with_capacity(num_outputs);
+        unsafe {
+            output.set_len(num_outputs);
+            let mut ptr = output.as_mut_ptr();
+            cpp!([payload as "FunctionPtr", mut ptr as "Variable*"] {
+                auto outputs = payload->Outputs();
+                copy(outputs.begin(), outputs.end(), ptr);
+            })
+        }
+        output
+    }
 }
 
 impl Drop for Function {

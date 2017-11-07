@@ -115,15 +115,15 @@ mod tests {
     #[test]
     fn feedforward_net_training() {
         set_max_num_cpu_threads(1);
-        let x = Variable::input_variable(Shape::from_slice(&vec!(3)));
-        let y = Variable::input_variable(Shape::from_slice(&vec!(1)));
+        let x = Variable::input_variable_with_name(Shape::from_slice(&vec!(3)), "X");
+        let y = Variable::input_variable_with_name(Shape::from_slice(&vec!(1)), "Y");
         let w1 = Variable::parameter(Shape::from_slice(&vec!(20, 3)), DeviceDescriptor::cpu());
         let b1 = Variable::parameter(Shape::from_slice(&vec!(20)), DeviceDescriptor::cpu());
         let w2 = Variable::parameter(Shape::from_slice(&vec!(1, 20)), DeviceDescriptor::cpu());
         let b2 = Variable::parameter(Shape::from_slice(&vec!(1)), DeviceDescriptor::cpu());
 
         let hidden_value = tanh(&plus(&times(&w1, &x), &b1));
-        let output_value = plus(&times(&w2, &hidden_value), &b2);
+        let output_value = named_alias(&plus(&times(&w2, &hidden_value), &b2), "output");
         let error = reduce_sum_all(&squared_error(&output_value, &y));
 
         let output_func = Function::from_variable(&output_value);
@@ -155,6 +155,34 @@ mod tests {
             lastloss = loss[0];
         }
         assert!(lastloss < 0.1);
+
+        output_func.save("test.dat");
+
+        {
+            let func_loaded = Function::load("test.dat", DeviceDescriptor::cpu());
+            let inputs = func_loaded.inputs();
+
+            let outputs = func_loaded.outputs();
+
+            let loaded_input = inputs.iter().find(|x| x.name() == "X").unwrap();
+            let loaded_output = outputs.iter().find(|x| x.name() == "output").unwrap();
+
+            let data = vec!(rng_next(&mut rng_seed), rng_next(&mut rng_seed), rng_next(&mut rng_seed),
+                           rng_next(&mut rng_seed), rng_next(&mut rng_seed), rng_next(&mut rng_seed));
+            let odata = vec!(data[0]*data[1] + data[2],
+                            data[3]*data[4] + data[5]);
+            let value = Value::batch(&loaded_input.shape(), &data, DeviceDescriptor::cpu());
+            let mut datamap = DataMap::new();
+            datamap.add(&loaded_input, &value);
+            let mut outdatamap = DataMap::new();
+            outdatamap.add_null(&loaded_output);
+
+            func_loaded.evaluate(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
+
+            let result = outdatamap.get(&loaded_output).unwrap().to_vec();
+            assert!((result[0] - odata[0]).abs() < 0.05);
+            assert!((result[1] - odata[1]).abs() < 0.05);
+        }
     }
 
     #[test]

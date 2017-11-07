@@ -27,6 +27,20 @@ impl Variable {
         }}
     }
 
+    pub fn input_variable_with_name(shape: Shape, name: &str) -> Variable {
+        let spayload = shape.payload;
+        let name_ptr = name.as_ptr();
+        let name_len = name.len();
+        Variable { payload: unsafe {
+            cpp!([spayload as "NDShape", name_ptr as "char*", name_len as "size_t"] -> VariableInner as "Variable" {
+                string name(name_ptr, name_ptr + name_len);
+                wstring wname;
+                wname.assign(name.begin(), name.end());
+                return InputVariable(spayload, DataType::Float, wname);
+            })
+        }}
+    }
+
     pub fn input_variable_with_gradient(shape: Shape) -> Variable {
         let spayload = shape.payload;
         Variable { payload: unsafe {
@@ -53,6 +67,28 @@ impl Variable {
                 return payload.Shape();
             })
         }}
+    }
+
+    pub fn name(&self) -> String {
+        let payload = self.payload;
+        let name_size = unsafe {
+            cpp!([payload as "Variable"] -> usize as "size_t" {
+                auto wname = payload.Name();
+                string name(wname.begin(), wname.end());
+                return name.size();
+            })
+        };
+        let mut bytes = Vec::with_capacity(name_size);
+        unsafe {
+            bytes.set_len(name_size);
+            let mut ptr = bytes.as_mut_ptr();
+            cpp!([payload as "Variable", mut ptr as "char*"] {
+                auto wname = payload.Name();
+                string name(wname.begin(), wname.end());
+                copy(name.begin(), name.end(), ptr);
+            })
+        }
+        String::from_utf8(bytes).unwrap()
     }
 }
 
@@ -140,6 +176,20 @@ pub fn reduce_sum_all(x: &Variable) -> Variable {
         })
     };
     Variable {payload}
+}
+
+pub fn named_alias(x: &Variable, name: &str) -> Variable {
+    let xpayload = x.payload;
+    let name_ptr = name.as_ptr();
+    let name_len = name.len();
+    Variable { payload: unsafe {
+        cpp!([xpayload as "Variable", name_ptr as "char*", name_len as "size_t"] -> VariableInner as "Variable" {
+                string name(name_ptr, name_ptr + name_len);
+                wstring wname;
+                wname.assign(name.begin(), name.end());
+                return Alias(xpayload, wname);
+            })
+    }}
 }
 
 
