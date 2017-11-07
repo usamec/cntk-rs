@@ -29,7 +29,8 @@ Only works with ASCII strings for variable names and filenames.
 * Training simple feed forward net. - Possible.
 * Save and load model. - Possible.
 * Training recurrent or seq2seq net. - Recurrences are possible.
-* Code for most operations. (probably generated).
+* Convnets.
+* Code for most operations. (probably generated). - Currently only selected ones are supported.
 * Write some meaningful examples. - Only in tests now.
 * Catch all relevant C++ exceptions
 * Better build scripts.

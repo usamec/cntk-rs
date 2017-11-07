@@ -11,6 +11,17 @@ pub fn plus(x: &Variable, y: &Variable) -> Variable {
     Variable {payload}
 }
 
+pub fn minus(x: &Variable, y: &Variable) -> Variable {
+    let xpayload = x.payload;
+    let ypayload = y.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
+            return Minus(xpayload, ypayload);
+        })
+    };
+    Variable {payload}
+}
+
 pub fn elem_times(x: &Variable, y: &Variable) -> Variable {
     let xpayload = x.payload;
     let ypayload = y.payload;
@@ -71,6 +82,16 @@ pub fn tanh(x: &Variable) -> Variable {
     let payload = unsafe {
         cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
             return Tanh(xpayload);
+        })
+    };
+    Variable {payload}
+}
+
+pub fn sigmoid(x: &Variable) -> Variable {
+    let xpayload = x.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
+            return Sigmoid(xpayload);
         })
     };
     Variable {payload}
