@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Function` struct in crate `cntk`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Function">
+
+    <title>cntk::Function - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc struct">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'>Struct Function</p><div class="block items"><ul><li><a href="#methods">Methods</a></li><li><a href="#implementations">Trait Implementations</a></li></ul></div><p class='location'><a href='index.html'>cntk</a></p><script>window.sidebarCurrent = {name: 'Function', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>cntk</a>::<wbr><a class="struct" href=''>Function</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../src/cntk/function.rs.html#20-22' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct Function { /* fields omitted */ }</pre><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl <a class="struct" href="../cntk/struct.Function.html" title="struct cntk::Function">Function</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/cntk/function.rs.html#28-178' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.from_variable' class="method"><span id='from_variable.v' class='invisible'><code>fn <a href='#method.from_variable' class='fnname'>from_variable</a>(var: &amp;<a class="struct" href="../cntk/variable/struct.Variable.html" title="struct cntk::variable::Variable">Variable</a>) -&gt; <a class="struct" href="../cntk/struct.Function.html" title="struct cntk::Function">Function</a></code></span></h4>
+<h4 id='method.combine' class="method"><span id='combine.v' class='invisible'><code>fn <a href='#method.combine' class='fnname'>combine</a>(variables: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">&amp;[</a>&amp;<a class="struct" href="../cntk/variable/struct.Variable.html" title="struct cntk::variable::Variable">Variable</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">]</a>) -&gt; <a class="struct" href="../cntk/struct.Function.html" title="struct cntk::Function">Function</a></code></span></h4>
+<h4 id='method.num_outputs' class="method"><span id='num_outputs.v' class='invisible'><code>fn <a href='#method.num_outputs' class='fnname'>num_outputs</a>(&amp;self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.usize.html">usize</a></code></span></h4>
+<h4 id='method.to_variable' class="method"><span id='to_variable.v' class='invisible'><code>fn <a href='#method.to_variable' class='fnname'>to_variable</a>(&amp;self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="../cntk/variable/struct.Variable.html" title="struct cntk::variable::Variable">Variable</a>&gt;</code></span></h4>
+<h4 id='method.evaluate' class="method"><span id='evaluate.v' class='invisible'><code>fn <a href='#method.evaluate' class='fnname'>evaluate</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;input_data_map: &amp;<a class="struct" href="../cntk/struct.DataMap.html" title="struct cntk::DataMap">DataMap</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;output_data_map: &amp;mut <a class="struct" href="../cntk/struct.DataMap.html" title="struct cntk::DataMap">DataMap</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;device: <a class="struct" href="../cntk/struct.DeviceDescriptor.html" title="struct cntk::DeviceDescriptor">DeviceDescriptor</a><br>)</code></span></h4>
+<h4 id='method.forward' class="method"><span id='forward.v' class='invisible'><code>fn <a href='#method.forward' class='fnname'>forward</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;input_data_map: &amp;<a class="struct" href="../cntk/struct.DataMap.html" title="struct cntk::DataMap">DataMap</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;output_data_map: &amp;mut <a class="struct" href="../cntk/struct.DataMap.html" title="struct cntk::DataMap">DataMap</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;device: <a class="struct" href="../cntk/struct.DeviceDescriptor.html" title="struct cntk::DeviceDescriptor">DeviceDescriptor</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;retain_backward_state_for: &amp;<a class="struct" href="../cntk/struct.VariableSet.html" title="struct cntk::VariableSet">VariableSet</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;exclude_gradients_for: &amp;<a class="struct" href="../cntk/struct.VariableSet.html" title="struct cntk::VariableSet">VariableSet</a><br>) -&gt; <a class="struct" href="../cntk/struct.BackPropState.html" title="struct cntk::BackPropState">BackPropState</a></code></span></h4>
+<h4 id='method.backward' class="method"><span id='backward.v' class='invisible'><code>fn <a href='#method.backward' class='fnname'>backward</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;bpstate: &amp;<a class="struct" href="../cntk/struct.BackPropState.html" title="struct cntk::BackPropState">BackPropState</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;gradient_values: &amp;<a class="struct" href="../cntk/struct.DataMap.html" title="struct cntk::DataMap">DataMap</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;output_map: &amp;mut <a class="struct" href="../cntk/struct.DataMap.html" title="struct cntk::DataMap">DataMap</a><br>)</code></span></h4>
+<h4 id='method.save' class="method"><span id='save.v' class='invisible'><code>fn <a href='#method.save' class='fnname'>save</a>(&amp;self, path: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>)</code></span></h4>
+<h4 id='method.load' class="method"><span id='load.v' class='invisible'><code>fn <a href='#method.load' class='fnname'>load</a>(path: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>, device: <a class="struct" href="../cntk/struct.DeviceDescriptor.html" title="struct cntk::DeviceDescriptor">DeviceDescriptor</a>) -&gt; <a class="struct" href="../cntk/struct.Function.html" title="struct cntk::Function">Function</a></code></span></h4>
+<h4 id='method.num_inputs' class="method"><span id='num_inputs.v' class='invisible'><code>fn <a href='#method.num_inputs' class='fnname'>num_inputs</a>(&amp;self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.usize.html">usize</a></code></span></h4>
+<h4 id='method.inputs' class="method"><span id='inputs.v' class='invisible'><code>fn <a href='#method.inputs' class='fnname'>inputs</a>(&amp;self) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="struct" href="../cntk/variable/struct.Variable.html" title="struct cntk::variable::Variable">Variable</a>&gt;</code></span></h4>
+<h4 id='method.outputs' class="method"><span id='outputs.v' class='invisible'><code>fn <a href='#method.outputs' class='fnname'>outputs</a>(&amp;self) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="struct" href="../cntk/variable/struct.Variable.html" title="struct cntk::variable::Variable">Variable</a>&gt;</code></span></h4>
+</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html" title="trait core::fmt::Debug">Debug</a> for <a class="struct" href="../cntk/struct.Function.html" title="struct cntk::Function">Function</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/cntk/function.rs.html#19' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.fmt' class="method"><span id='fmt.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class="struct" href="https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html" title="struct core::fmt::Formatter">Formatter</a>) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/core/fmt/type.Result.html" title="type core::fmt::Result">Result</a></code></span></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html" title="trait core::ops::drop::Drop">Drop</a> for <a class="struct" href="../cntk/struct.Function.html" title="struct cntk::Function">Function</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/cntk/function.rs.html#180-189' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.drop' class="method"><span id='drop.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html#tymethod.drop' class='fnname'>drop</a>(&amp;mut self)</code></span></h4>
+<div class='docblock'><p>A method called when the value goes out of scope. <a href="https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html#tymethod.drop">Read more</a></p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "cntk";
+    </script>
+    <script src="../main.js"></script>
+    <script defer src="../search-index.js"></script>
+</body>
+</html>
