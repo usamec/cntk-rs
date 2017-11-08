@@ -42,3 +42,14 @@ impl Shape {
         }
     }
 }
+
+impl Drop for Shape {
+    fn drop(&mut self) {
+        let payload = self.payload;
+        unsafe {
+            cpp!([payload as "NDShape"] {
+                payload.~NDShape();
+            })
+        };
+    }
+}

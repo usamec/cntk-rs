@@ -186,6 +186,30 @@ impl Function {
             })
         }}
     }
+
+    pub fn num_parameters(&self) -> usize {
+        let payload = self.payload;
+        unsafe {
+            cpp!([payload as "FunctionPtr"] -> usize as "size_t" {
+                return payload->Parameters().size();
+            })
+        }
+    }
+
+    pub fn parameters(&self) -> Vec<Variable> {
+        let payload = self.payload;
+        let num_parameters = self.num_parameters();
+        let mut output = Vec::with_capacity(num_parameters);
+        unsafe {
+            output.set_len(num_parameters);
+            let mut ptr = output.as_mut_ptr();
+            cpp!([payload as "FunctionPtr", mut ptr as "Variable*"] {
+                auto outputs = payload->Parameters();
+                copy(outputs.begin(), outputs.end(), ptr);
+            })
+        }
+        output
+    }
 }
 
 impl Drop for Function {

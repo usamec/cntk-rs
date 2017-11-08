@@ -16,6 +16,9 @@ mod function;
 pub use function::Function;
 pub use function::BackPropState;
 
+mod axis;
+pub use axis::Axis;
+
 mod value;
 pub use value::Value;
 
@@ -70,7 +73,7 @@ mod tests {
         let var = Variable::input_variable_with_gradient(Shape::scalar());
         let var2 = Variable::input_variable_with_gradient(Shape::scalar());
         let var3 = Variable::input_variable_with_gradient(Shape::scalar());
-        let out = plus(&elem_times(&var, &var2), &var3);
+        let out = plus(&element_times(&var, &var2), &var3);
 
         let data: Vec<f32> = vec!(4.0, 7.0);
         let data2: Vec<f32> = vec!(11.0, 12.0);
@@ -256,7 +259,7 @@ mod tests {
         let x = Variable::input_variable(Shape::from_slice(&vec!(2)));
         let y = Variable::input_variable(Shape::from_slice(&vec!(2)));
         let placeholder = Variable::placeholder(Shape::from_slice(&vec!(2)));
-        let output = plus(&placeholder, &elem_times(&x, &y));
+        let output = plus(&placeholder, &element_times(&x, &y));
         let placeholder_replacement = past_value(&output);
 
         let mut replacement_map = ReplacementMap::new();
