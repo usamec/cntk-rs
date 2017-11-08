@@ -250,6 +250,57 @@
 <span id="205">205</span>
 <span id="206">206</span>
 <span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
 </pre><pre class="rust ">
 <span class="kw">use</span> <span class="ident">shape</span>::{<span class="ident">Shape</span>, <span class="ident">ShapeInner</span>};
 <span class="kw">use</span> <span class="ident">device</span>::<span class="ident">DeviceDescriptor</span>;
@@ -343,7 +394,7 @@
 }
 
 <span class="kw">impl</span> <span class="ident">Variable</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">input_variable</span>(<span class="ident">shape</span>: <span class="ident">Shape</span>) <span class="op">-&gt;</span> <span class="ident">Variable</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">input_variable</span>(<span class="ident">shape</span>: <span class="kw-2">&amp;</span><span class="ident">Shape</span>) <span class="op">-&gt;</span> <span class="ident">Variable</span> {
         <span class="kw">let</span> <span class="ident">spayload</span> <span class="op">=</span> <span class="ident">shape</span>.<span class="ident">payload</span>;
         <span class="ident">Variable</span> { <span class="ident">payload</span>: <span class="kw">unsafe</span> {
             <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">spayload</span> <span class="kw">as</span> <span class="string">&quot;NDShape&quot;</span>] <span class="op">-&gt;</span> <span class="ident">VariableInner</span> <span class="kw">as</span> <span class="string">&quot;Variable&quot;</span> {
@@ -352,7 +403,7 @@
         }}
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">input_variable_with_name</span>(<span class="ident">shape</span>: <span class="ident">Shape</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-&gt;</span> <span class="ident">Variable</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">input_variable_with_name</span>(<span class="ident">shape</span>: <span class="kw-2">&amp;</span><span class="ident">Shape</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-&gt;</span> <span class="ident">Variable</span> {
         <span class="kw">let</span> <span class="ident">spayload</span> <span class="op">=</span> <span class="ident">shape</span>.<span class="ident">payload</span>;
         <span class="kw">let</span> <span class="ident">name_ptr</span> <span class="op">=</span> <span class="ident">name</span>.<span class="ident">as_ptr</span>();
         <span class="kw">let</span> <span class="ident">name_len</span> <span class="op">=</span> <span class="ident">name</span>.<span class="ident">len</span>();
@@ -366,7 +417,7 @@
         }}
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">input_variable_with_gradient</span>(<span class="ident">shape</span>: <span class="ident">Shape</span>) <span class="op">-&gt;</span> <span class="ident">Variable</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">input_variable_with_gradient</span>(<span class="ident">shape</span>: <span class="kw-2">&amp;</span><span class="ident">Shape</span>) <span class="op">-&gt;</span> <span class="ident">Variable</span> {
         <span class="kw">let</span> <span class="ident">spayload</span> <span class="op">=</span> <span class="ident">shape</span>.<span class="ident">payload</span>;
         <span class="ident">Variable</span> { <span class="ident">payload</span>: <span class="kw">unsafe</span> {
             <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">spayload</span> <span class="kw">as</span> <span class="string">&quot;NDShape&quot;</span>] <span class="op">-&gt;</span> <span class="ident">VariableInner</span> <span class="kw">as</span> <span class="string">&quot;Variable&quot;</span> {
@@ -375,7 +426,7 @@
         }}
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">parameter</span>(<span class="ident">shape</span>: <span class="ident">Shape</span>, <span class="ident">initializer</span>: <span class="ident">ParameterInitializer</span>, <span class="ident">device</span>: <span class="ident">DeviceDescriptor</span>) <span class="op">-&gt;</span> <span class="ident">Variable</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">parameter</span>(<span class="ident">shape</span>: <span class="kw-2">&amp;</span><span class="ident">Shape</span>, <span class="ident">initializer</span>: <span class="kw-2">&amp;</span><span class="ident">ParameterInitializer</span>, <span class="ident">device</span>: <span class="ident">DeviceDescriptor</span>) <span class="op">-&gt;</span> <span class="ident">Variable</span> {
         <span class="kw">let</span> <span class="ident">spayload</span> <span class="op">=</span> <span class="ident">shape</span>.<span class="ident">payload</span>;
         <span class="kw">let</span> <span class="ident">dpayload</span> <span class="op">=</span> <span class="ident">device</span>.<span class="ident">payload</span>;
         <span class="kw">let</span> <span class="ident">initializerpayload</span> <span class="op">=</span> <span class="ident">initializer</span>.<span class="ident">payload</span>;
@@ -386,7 +437,7 @@
         }}
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">placeholder</span>(<span class="ident">shape</span>: <span class="ident">Shape</span>) <span class="op">-&gt;</span> <span class="ident">Variable</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">placeholder</span>(<span class="ident">shape</span>: <span class="kw-2">&amp;</span><span class="ident">Shape</span>) <span class="op">-&gt;</span> <span class="ident">Variable</span> {
         <span class="kw">let</span> <span class="ident">spayload</span> <span class="op">=</span> <span class="ident">shape</span>.<span class="ident">payload</span>;
         <span class="ident">Variable</span> { <span class="ident">payload</span>: <span class="kw">unsafe</span> {
             <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">spayload</span> <span class="kw">as</span> <span class="string">&quot;NDShape&quot;</span>] <span class="op">-&gt;</span> <span class="ident">VariableInner</span> <span class="kw">as</span> <span class="string">&quot;Variable&quot;</span> {
@@ -434,6 +485,46 @@
         }
         <span class="ident">String</span>::<span class="ident">from_utf8</span>(<span class="ident">bytes</span>).<span class="ident">unwrap</span>()
     }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">normal_random</span>(<span class="ident">x</span>: <span class="kw-2">&amp;</span><span class="ident">Shape</span>, <span class="ident">mean</span>: <span class="ident">f64</span>, <span class="ident">scale</span>: <span class="ident">f64</span>) <span class="op">-&gt;</span> <span class="ident">Variable</span> {
+        <span class="kw">let</span> <span class="ident">xpayload</span> <span class="op">=</span> <span class="ident">x</span>.<span class="ident">payload</span>;
+        <span class="kw">let</span> <span class="ident">payload</span> <span class="op">=</span> <span class="kw">unsafe</span> {
+            <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">xpayload</span> <span class="kw">as</span> <span class="string">&quot;NDShape&quot;</span>, <span class="ident">mean</span> <span class="kw">as</span> <span class="string">&quot;double&quot;</span>, <span class="ident">scale</span> <span class="kw">as</span> <span class="string">&quot;double&quot;</span>] <span class="op">-&gt;</span> <span class="ident">VariableInner</span> <span class="kw">as</span> <span class="string">&quot;Variable&quot;</span> {
+            <span class="kw">return</span> <span class="ident">NormalRandom</span>(<span class="ident">xpayload</span>, <span class="ident">DataType</span>::<span class="ident">Float</span>, <span class="ident">mean</span>, <span class="ident">scale</span>);
+        })
+        };
+        <span class="ident">Variable</span> {<span class="ident">payload</span>}
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">bernoulli_random</span>(<span class="ident">x</span>: <span class="kw-2">&amp;</span><span class="ident">Shape</span>, <span class="ident">mean</span>: <span class="ident">f64</span>) <span class="op">-&gt;</span> <span class="ident">Variable</span> {
+        <span class="kw">let</span> <span class="ident">xpayload</span> <span class="op">=</span> <span class="ident">x</span>.<span class="ident">payload</span>;
+        <span class="kw">let</span> <span class="ident">payload</span> <span class="op">=</span> <span class="kw">unsafe</span> {
+            <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">xpayload</span> <span class="kw">as</span> <span class="string">&quot;NDShape&quot;</span>, <span class="ident">mean</span> <span class="kw">as</span> <span class="string">&quot;double&quot;</span>] <span class="op">-&gt;</span> <span class="ident">VariableInner</span> <span class="kw">as</span> <span class="string">&quot;Variable&quot;</span> {
+            <span class="kw">return</span> <span class="ident">BernoulliRandom</span>(<span class="ident">xpayload</span>, <span class="ident">DataType</span>::<span class="ident">Float</span>, <span class="ident">mean</span>);
+        })
+        };
+        <span class="ident">Variable</span> {<span class="ident">payload</span>}
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">uniform_random</span>(<span class="ident">x</span>: <span class="kw-2">&amp;</span><span class="ident">Shape</span>, <span class="ident">low</span>: <span class="ident">f64</span>, <span class="ident">high</span>: <span class="ident">f64</span>) <span class="op">-&gt;</span> <span class="ident">Variable</span> {
+        <span class="kw">let</span> <span class="ident">xpayload</span> <span class="op">=</span> <span class="ident">x</span>.<span class="ident">payload</span>;
+        <span class="kw">let</span> <span class="ident">payload</span> <span class="op">=</span> <span class="kw">unsafe</span> {
+            <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">xpayload</span> <span class="kw">as</span> <span class="string">&quot;NDShape&quot;</span>, <span class="ident">low</span> <span class="kw">as</span> <span class="string">&quot;double&quot;</span>, <span class="ident">high</span> <span class="kw">as</span> <span class="string">&quot;double&quot;</span>] <span class="op">-&gt;</span> <span class="ident">VariableInner</span> <span class="kw">as</span> <span class="string">&quot;Variable&quot;</span> {
+            <span class="kw">return</span> <span class="ident">UniformRandom</span>(<span class="ident">xpayload</span>, <span class="ident">DataType</span>::<span class="ident">Float</span>, <span class="ident">low</span>, <span class="ident">high</span>);
+        })
+        };
+        <span class="ident">Variable</span> {<span class="ident">payload</span>}
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">gumbel_random</span>(<span class="ident">x</span>: <span class="kw-2">&amp;</span><span class="ident">Shape</span>, <span class="ident">loc</span>: <span class="ident">f64</span>, <span class="ident">scale</span>: <span class="ident">f64</span>) <span class="op">-&gt;</span> <span class="ident">Variable</span> {
+        <span class="kw">let</span> <span class="ident">xpayload</span> <span class="op">=</span> <span class="ident">x</span>.<span class="ident">payload</span>;
+        <span class="kw">let</span> <span class="ident">payload</span> <span class="op">=</span> <span class="kw">unsafe</span> {
+            <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">xpayload</span> <span class="kw">as</span> <span class="string">&quot;NDShape&quot;</span>, <span class="ident">loc</span> <span class="kw">as</span> <span class="string">&quot;double&quot;</span>, <span class="ident">scale</span> <span class="kw">as</span> <span class="string">&quot;double&quot;</span>] <span class="op">-&gt;</span> <span class="ident">VariableInner</span> <span class="kw">as</span> <span class="string">&quot;Variable&quot;</span> {
+            <span class="kw">return</span> <span class="ident">GumbelRandom</span>(<span class="ident">xpayload</span>, <span class="ident">DataType</span>::<span class="ident">Float</span>, <span class="ident">loc</span>, <span class="ident">scale</span>);
+        })
+        };
+        <span class="ident">Variable</span> {<span class="ident">payload</span>}
+    }
 }
 
 <span class="kw">impl</span> <span class="ident">Clone</span> <span class="kw">for</span> <span class="ident">Variable</span> {
@@ -454,6 +545,17 @@
         <span class="kw">unsafe</span> {
             <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">payload</span> <span class="kw">as</span> <span class="string">&quot;Variable&quot;</span>] {
                 <span class="ident">payload</span>.~<span class="ident">Variable</span>();
+            })
+        };
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">ParameterInitializer</span> {
+    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
+        <span class="kw">let</span> <span class="ident">payload</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">payload</span>;
+        <span class="kw">unsafe</span> {
+            <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">payload</span> <span class="kw">as</span> <span class="string">&quot;ParameterInitializer&quot;</span>] {
+                <span class="ident">payload</span>.~<span class="ident">ParameterInitializer</span>();
             })
         };
     }
