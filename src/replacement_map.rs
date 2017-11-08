@@ -70,8 +70,8 @@ mod tests {
     #[test]
     fn test_add_and_get() {
         let mut map = ReplacementMap::new();
-        let var = Variable::input_variable(Shape::scalar());
-        let var2 = Variable::input_variable(Shape::scalar());
+        let var = Variable::input_variable(&Shape::scalar());
+        let var2 = Variable::input_variable(&Shape::scalar());
         
         map.add(&var, &var2);
     }

@@ -1,7 +1,7 @@
 [package]
 name = "cntk"
 description = "Wrapper around Microsoft CNTK library"
-license = "MIT"
+license = "Apache-2.0/MIT"
 version = "0.0.4"
 authors = ["Vlado Boza <bozavlado@gmail.com>"]
 repository = "https://github.com/usamec/cntk-rs"

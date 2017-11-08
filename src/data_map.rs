@@ -106,8 +106,8 @@ mod tests {
     #[test]
     fn test_add_and_get() {
         let mut map = DataMap::new();
-        let var = Variable::input_variable(Shape::scalar());
-        let var2 = Variable::input_variable(Shape::scalar());
+        let var = Variable::input_variable(&Shape::scalar());
+        let var2 = Variable::input_variable(&Shape::scalar());
 
         let data: Vec<f32> = vec!(11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 110.0);
 

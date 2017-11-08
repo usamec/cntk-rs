@@ -67,7 +67,7 @@ mod tests {
     #[test]
     fn test_add() {
         let mut set = VariableSet::new();
-        let var = Variable::input_variable(Shape::scalar());
+        let var = Variable::input_variable(&Shape::scalar());
 
         set.add(&var);
     }

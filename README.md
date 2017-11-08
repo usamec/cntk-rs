@@ -30,7 +30,7 @@ Only works with ASCII strings for variable names and filenames.
 * Save and load model. - Possible.
 * Training recurrent or seq2seq net. - Recurrences are possible.
 * Convnets.
-* Code for most operations. (probably generated). - Currently only selected ones are supported.
+* Code for most operations. (probably generated). - Almost all, except random numbers, convnets and couple of helpers.
 * Write some meaningful examples. - Only in tests now.
 * Catch all relevant C++ exceptions
 * Better build scripts.

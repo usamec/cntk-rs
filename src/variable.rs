@@ -90,7 +90,7 @@ pub struct Variable {
 }
 
 impl Variable {
-    pub fn input_variable(shape: Shape) -> Variable {
+    pub fn input_variable(shape: &Shape) -> Variable {
         let spayload = shape.payload;
         Variable { payload: unsafe {
             cpp!([spayload as "NDShape"] -> VariableInner as "Variable" {
@@ -99,7 +99,7 @@ impl Variable {
         }}
     }
 
-    pub fn input_variable_with_name(shape: Shape, name: &str) -> Variable {
+    pub fn input_variable_with_name(shape: &Shape, name: &str) -> Variable {
         let spayload = shape.payload;
         let name_ptr = name.as_ptr();
         let name_len = name.len();
@@ -113,7 +113,7 @@ impl Variable {
         }}
     }
 
-    pub fn input_variable_with_gradient(shape: Shape) -> Variable {
+    pub fn input_variable_with_gradient(shape: &Shape) -> Variable {
         let spayload = shape.payload;
         Variable { payload: unsafe {
             cpp!([spayload as "NDShape"] -> VariableInner as "Variable" {
@@ -122,7 +122,7 @@ impl Variable {
         }}
     }
 
-    pub fn parameter(shape: Shape, initializer: ParameterInitializer, device: DeviceDescriptor) -> Variable {
+    pub fn parameter(shape: &Shape, initializer: &ParameterInitializer, device: DeviceDescriptor) -> Variable {
         let spayload = shape.payload;
         let dpayload = device.payload;
         let initializerpayload = initializer.payload;
@@ -133,7 +133,7 @@ impl Variable {
         }}
     }
 
-    pub fn placeholder(shape: Shape) -> Variable {
+    pub fn placeholder(shape: &Shape) -> Variable {
         let spayload = shape.payload;
         Variable { payload: unsafe {
             cpp!([spayload as "NDShape"] -> VariableInner as "Variable" {
@@ -201,6 +201,17 @@ impl Drop for Variable {
         unsafe {
             cpp!([payload as "Variable"] {
                 payload.~Variable();
+            })
+        };
+    }
+}
+
+impl Drop for ParameterInitializer {
+    fn drop(&mut self) {
+        let payload = self.payload;
+        unsafe {
+            cpp!([payload as "ParameterInitializer"] {
+                payload.~ParameterInitializer();
             })
         };
     }
