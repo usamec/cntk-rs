@@ -60,15 +60,6 @@ impl Value {
         Value { payload }
     }
 
-    pub fn empty() -> Value {
-        Value { payload: unsafe {
-            cpp!([] -> ValueInner as "ValuePtr" {
-                ValuePtr ptr;
-                return ptr;
-            })
-        }}
-    }
-
     pub fn to_vec(&self) -> Vec<f32> {
         let payload = self.payload;
         let total_size = unsafe {

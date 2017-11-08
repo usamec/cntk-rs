@@ -29,8 +29,8 @@ Only works with ASCII strings for variable names and filenames.
 * Training simple feed forward net. - Possible.
 * Save and load model. - Possible.
 * Training recurrent or seq2seq net. - Recurrences are possible.
-* Convnets.
-* Code for most operations. (probably generated). - Almost all, except random numbers, convnets and couple of helpers.
+* Convnets. - Convolution and pooling are present
+* Code for most operations. (probably generated). - Almost all, except couple of helpers.
 * Write some meaningful examples. - Only in tests now.
 * Catch all relevant C++ exceptions
 * Better build scripts.

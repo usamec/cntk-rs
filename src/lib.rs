@@ -58,9 +58,8 @@ mod tests {
         datamap.add(&var, &val);
         datamap.add(&var2, &val2);
 
-        let emptyval = Value::empty();
         let mut outdatamap = DataMap::new();
-        outdatamap.add(&plus, &emptyval);
+        outdatamap.add_null(&plus);
 
         Function::from_variable(&plus).evaluate(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
 
@@ -88,9 +87,8 @@ mod tests {
         datamap.add(&var2, &val2);
         datamap.add(&var3, &val3);
 
-        let emptyval = Value::empty();
         let mut outdatamap = DataMap::new();
-        outdatamap.add(&out, &emptyval);
+        outdatamap.add_null(&out);
 
         let mut retain_state = VariableSet::new();
         retain_state.add(&out);
@@ -101,10 +99,8 @@ mod tests {
         let out_val = outdatamap.get(&out).unwrap();
 
         let mut result = DataMap::new();
-        let emptyval2 = Value::empty();
-        let emptyval3 = Value::empty();
-        result.add(&var2, &emptyval2);
-        result.add(&var3, &emptyval3);
+        result.add_null(&var2);
+        result.add_null(&var3);
 
         let mut rgvalues = DataMap::new();
         let rootgrad = Value::from_vec(&out_val.shape(), &(vec![1.; out_val.shape().total_size()]), DeviceDescriptor::cpu());
@@ -390,5 +386,58 @@ mod tests {
         test_single_arg_func(|x| {
             reduce_sum(x, &Axis::all())
         }, &Shape::from_slice(&vec!(2, 3)), &vec!(1., 2., 3., 4., 5., 6.), &vec!(21.));
+    }
+
+    #[test]
+    fn test_max_pooling() {
+        test_single_arg_func(|x| {
+            max_pooling(x, &Shape::from_slice(&vec!(2, 2)))
+        }, &Shape::from_slice(&vec!(3, 3)), &vec!(1., 2., 3., 4., 5., 6., 7., 8., 9.), &vec!(5., 6., 8., 9.));
+
+        test_single_arg_func(|x| {
+            max_pooling(x, &Shape::from_slice(&vec!(2)))
+        }, &Shape::from_slice(&vec!(5)), &vec!(1., 2., 3., 4., 5.), &vec!(2., 3., 4., 5.));
+    }
+
+    #[test]
+    fn test_1d_convolution() {
+        let var = Variable::input_variable(&Shape::from_slice(&vec!(5, 1)));
+        let var2 = Variable::parameter(&Shape::from_slice(&vec!(3, 1, 1)), &ParameterInitializer::constant(2.), DeviceDescriptor::cpu());
+        let conv = convolution(&var2, &var);
+
+        let data: Vec<f32> = vec!(1.0, 2.0, 3.0, 4.0, 5.0);
+        let val = Value::from_vec(&var.shape(), &data, DeviceDescriptor::cpu());
+
+        let mut datamap = DataMap::new();
+        datamap.add(&var, &val);
+
+        let mut outdatamap = DataMap::new();
+        outdatamap.add_null(&conv);
+
+        Function::from_variable(&conv).evaluate(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
+
+        let result = outdatamap.get(&conv).unwrap().to_vec();
+        assert_eq!(result, vec!(6., 12., 18., 24., 18.));
+    }
+
+    #[test]
+    fn test_1d_convolution_2() {
+        let var = Variable::input_variable(&Shape::from_slice(&vec!(5, 1)));
+        let var2 = Variable::parameter(&Shape::from_slice(&vec!(2, 1, 1)), &ParameterInitializer::constant(2.), DeviceDescriptor::cpu());
+        let conv = convolution(&var2, &var);
+
+        let data: Vec<f32> = vec!(1.0, 2.0, 3.0, 4.0, 5.0);
+        let val = Value::from_vec(&var.shape(), &data, DeviceDescriptor::cpu());
+
+        let mut datamap = DataMap::new();
+        datamap.add(&var, &val);
+
+        let mut outdatamap = DataMap::new();
+        outdatamap.add_null(&conv);
+
+        Function::from_variable(&conv).evaluate(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
+
+        let result = outdatamap.get(&conv).unwrap().to_vec();
+        assert_eq!(result, vec!(6., 10., 14., 18., 10.));
     }
 }

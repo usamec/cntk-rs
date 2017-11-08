@@ -717,3 +717,78 @@ pub fn argmin(x: &Variable, axis: &Axis) -> Variable {
     Variable {payload}
 }
 /* unary axis ops end here */
+
+/* random ops */
+pub fn normal_random_like(x: &Variable, mean: f64, scale: f64) -> Variable {
+    let xpayload = x.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable", mean as "double", scale as "double"] -> VariableInner as "Variable" {
+            return NormalRandomLike(xpayload, mean, scale);
+        })
+    };
+    Variable {payload}
+}
+
+pub fn bernoulli_random_like(x: &Variable, mean: f64) -> Variable {
+    let xpayload = x.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable", mean as "double"] -> VariableInner as "Variable" {
+            return BernoulliRandomLike(xpayload, mean);
+        })
+    };
+    Variable {payload}
+}
+
+pub fn uniform_random_like(x: &Variable, low: f64, high: f64) -> Variable {
+    let xpayload = x.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable", low as "double", high as "double"] -> VariableInner as "Variable" {
+            return UniformRandomLike(xpayload, low, high);
+        })
+    };
+    Variable {payload}
+}
+
+pub fn gumbel_random_like(x: &Variable, loc: f64, scale: f64) -> Variable {
+    let xpayload = x.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable", loc as "double", scale as "double"] -> VariableInner as "Variable" {
+            return GumbelRandomLike(xpayload, loc, scale);
+        })
+    };
+    Variable {payload}
+}
+
+/* random ops end */
+
+/* convolution */
+pub fn convolution(convmap: &Variable, y: &Variable) -> Variable {
+    let convmappayload = convmap.payload;
+    let ypayload = y.payload;
+    let payload = unsafe {
+        cpp!([convmappayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
+            return Convolution(convmappayload, ypayload);
+        })
+    };
+    Variable {payload}
+}
+
+pub fn max_pooling(x: &Variable, window_shape: &Shape) -> Variable {
+    let xpayload = x.payload;
+    let spayload = window_shape.payload;
+    Variable { payload: unsafe {
+        cpp!([xpayload as "Variable", spayload as "NDShape"] -> VariableInner as "Variable" {
+                return Pooling(xpayload, PoolingType::Max, spayload);
+            })
+    }}
+}
+
+pub fn avg_pooling(x: &Variable, window_shape: &Shape) -> Variable {
+    let xpayload = x.payload;
+    let spayload = window_shape.payload;
+    Variable { payload: unsafe {
+        cpp!([xpayload as "Variable", spayload as "NDShape"] -> VariableInner as "Variable" {
+                return Pooling(xpayload, PoolingType::Average, spayload);
+            })
+    }}
+}

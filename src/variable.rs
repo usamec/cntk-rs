@@ -181,6 +181,46 @@ impl Variable {
         }
         String::from_utf8(bytes).unwrap()
     }
+
+    pub fn normal_random(x: &Shape, mean: f64, scale: f64) -> Variable {
+        let xpayload = x.payload;
+        let payload = unsafe {
+            cpp!([xpayload as "NDShape", mean as "double", scale as "double"] -> VariableInner as "Variable" {
+            return NormalRandom(xpayload, DataType::Float, mean, scale);
+        })
+        };
+        Variable {payload}
+    }
+
+    pub fn bernoulli_random(x: &Shape, mean: f64) -> Variable {
+        let xpayload = x.payload;
+        let payload = unsafe {
+            cpp!([xpayload as "NDShape", mean as "double"] -> VariableInner as "Variable" {
+            return BernoulliRandom(xpayload, DataType::Float, mean);
+        })
+        };
+        Variable {payload}
+    }
+
+    pub fn uniform_random(x: &Shape, low: f64, high: f64) -> Variable {
+        let xpayload = x.payload;
+        let payload = unsafe {
+            cpp!([xpayload as "NDShape", low as "double", high as "double"] -> VariableInner as "Variable" {
+            return UniformRandom(xpayload, DataType::Float, low, high);
+        })
+        };
+        Variable {payload}
+    }
+
+    pub fn gumbel_random(x: &Shape, loc: f64, scale: f64) -> Variable {
+        let xpayload = x.payload;
+        let payload = unsafe {
+            cpp!([xpayload as "NDShape", loc as "double", scale as "double"] -> VariableInner as "Variable" {
+            return GumbelRandom(xpayload, DataType::Float, loc, scale);
+        })
+        };
+        Variable {payload}
+    }
 }
 
 impl Clone for Variable {
