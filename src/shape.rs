@@ -41,6 +41,24 @@ impl Shape {
             })
         }
     }
+
+    pub fn rank(&self) -> usize {
+        let payload = self.payload;
+        unsafe {
+            cpp!([payload as "NDShape"] -> usize as "size_t" {
+                return payload.Rank();
+            })
+        }
+    }
+
+    pub fn get(&self, axis: usize) -> usize {
+        let payload = self.payload;
+        unsafe {
+            cpp!([payload as "NDShape", axis as "size_t"] -> usize as "size_t" {
+                return payload[axis];
+            })
+        }
+    }
 }
 
 impl Drop for Shape {

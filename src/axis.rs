@@ -45,3 +45,15 @@ impl Drop for Axis {
         };
     }
 }
+
+impl Clone for Axis {
+    fn clone(&self) -> Self {
+        let xpayload = self.payload;
+        let payload = unsafe {
+            cpp!([xpayload as "Axis"] -> AxisInner as "Axis" {
+                return xpayload;
+            })
+        };
+        Axis {payload}
+    }
+}

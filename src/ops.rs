@@ -1,4 +1,28 @@
 use variable::{Variable, VariableInner};
+use axis::Axis;
+use shape::Shape;
+
+pub fn transpose_axes(x: &Variable, axis1: &Axis, axis2: &Axis) -> Variable {
+    let xpayload = x.payload;
+    let a1payload = axis1.payload;
+    let a2payload = axis2.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable", a1payload as "Axis", a2payload as "Axis"] -> VariableInner as "Variable" {
+            return TransposeAxes(xpayload, a1payload, a2payload);
+        })
+    };
+    Variable { payload }
+}
+
+pub fn dropout(x: &Variable, dropout_rate: f64) -> Variable {
+    let xpayload = x.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable", dropout_rate as "double"] -> VariableInner as "Variable" {
+            return Dropout(xpayload, dropout_rate);
+        })
+    };
+    Variable {payload}
+}
 
 pub fn reduce_sum_all(x: &Variable) -> Variable {
     let xpayload = x.payload;
@@ -8,6 +32,48 @@ pub fn reduce_sum_all(x: &Variable) -> Variable {
         })
     };
     Variable {payload}
+}
+
+pub fn splice(variables: &[&Variable], axis: &Axis) -> Variable {
+    let data: Vec<Variable> = variables.iter().map(|&x| x.clone()).collect();
+    let data_ptr = data.as_ptr();
+    let data_size = data.len();
+    let apayload = axis.payload;
+    Variable { payload: unsafe {
+        cpp!([data_ptr as "Variable*", data_size as "size_t", apayload as "Axis"] -> VariableInner as "Variable" {
+                return Splice(vector<Variable>(data_ptr, data_ptr + data_size), apayload);
+            })
+    }}
+}
+
+pub fn reshape(x: &Variable, shape: &Shape) -> Variable {
+    let xpayload = x.payload;
+    let spayload = shape.payload;
+    Variable { payload: unsafe {
+        cpp!([xpayload as "Variable", spayload as "NDShape"] -> VariableInner as "Variable" {
+                return Reshape(xpayload, spayload);
+            })
+    }}
+}
+
+pub fn slice(x: &Variable, axis: &[&Axis], begin_index: &[i32], end_index: &[i32]) -> Variable {
+    let xpayload = x.payload;
+    assert_eq!(axis.len(), begin_index.len());
+    assert_eq!(axis.len(), end_index.len());
+    let len = axis.len();
+    let adata: Vec<Axis> = axis.iter().map(|&x| x.clone()).collect();
+    let adata_ptr = adata.as_ptr();
+    let bdata_ptr = begin_index.as_ptr();
+    let edata_ptr = end_index.as_ptr();
+
+    Variable { payload: unsafe {
+        cpp!([xpayload as "Variable", adata_ptr as "Axis*", len as "size_t", bdata_ptr as "int*", edata_ptr as "int*"] -> VariableInner as "Variable" {
+                return Slice(xpayload,
+                             vector<Axis>(adata_ptr, adata_ptr + len),
+                             vector<int>(bdata_ptr, bdata_ptr + len),
+                             vector<int>(edata_ptr, edata_ptr + len));
+            })
+    }}
 }
 
 pub fn named_alias(x: &Variable, name: &str) -> Variable {
@@ -29,6 +95,26 @@ pub fn past_value(x: &Variable) -> Variable {
     let payload = unsafe {
         cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
             return PastValue(xpayload);
+        })
+    };
+    Variable {payload}
+}
+
+pub fn future_value(x: &Variable) -> Variable {
+    let xpayload = x.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
+            return FutureValue(xpayload);
+        })
+    };
+    Variable {payload}
+}
+
+pub fn first(x: &Variable) -> Variable {
+    let xpayload = x.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
+            return Sequence::First(xpayload);
         })
     };
     Variable {payload}
@@ -271,16 +357,6 @@ pub fn to_batch(x: &Variable) -> Variable {
     let payload = unsafe {
         cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
             return ToBatch(xpayload);
-        })
-    };
-    Variable {payload}
-}
-
-pub fn alias(x: &Variable) -> Variable {
-    let xpayload = x.payload;
-    let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return Alias(xpayload);
         })
     };
     Variable {payload}
@@ -540,3 +616,104 @@ pub fn classification_error(x: &Variable, y: &Variable) -> Variable {
 }
 
 /* binary ops end here */
+
+/* unary axis ops start here */
+pub fn softmax_with_axis(x: &Variable, axis: &Axis) -> Variable {
+    let xpayload = x.payload;
+    let apayload = axis.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable", apayload as "Axis"] -> VariableInner as "Variable" {
+            return Softmax(xpayload, apayload);
+        })
+    };
+    Variable {payload}
+}
+
+pub fn reduce_sum(x: &Variable, axis: &Axis) -> Variable {
+    let xpayload = x.payload;
+    let apayload = axis.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable", apayload as "Axis"] -> VariableInner as "Variable" {
+            return ReduceSum(xpayload, apayload);
+        })
+    };
+    Variable {payload}
+}
+
+pub fn reduce_log_sum(x: &Variable, axis: &Axis) -> Variable {
+    let xpayload = x.payload;
+    let apayload = axis.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable", apayload as "Axis"] -> VariableInner as "Variable" {
+            return ReduceLogSum(xpayload, apayload);
+        })
+    };
+    Variable {payload}
+}
+
+pub fn reduce_mean(x: &Variable, axis: &Axis) -> Variable {
+    let xpayload = x.payload;
+    let apayload = axis.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable", apayload as "Axis"] -> VariableInner as "Variable" {
+            return ReduceMean(xpayload, apayload);
+        })
+    };
+    Variable {payload}
+}
+
+pub fn reduce_max(x: &Variable, axis: &Axis) -> Variable {
+    let xpayload = x.payload;
+    let apayload = axis.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable", apayload as "Axis"] -> VariableInner as "Variable" {
+            return ReduceMax(xpayload, apayload);
+        })
+    };
+    Variable {payload}
+}
+
+pub fn reduce_min(x: &Variable, axis: &Axis) -> Variable {
+    let xpayload = x.payload;
+    let apayload = axis.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable", apayload as "Axis"] -> VariableInner as "Variable" {
+            return ReduceMin(xpayload, apayload);
+        })
+    };
+    Variable {payload}
+}
+
+pub fn reduce_prod(x: &Variable, axis: &Axis) -> Variable {
+    let xpayload = x.payload;
+    let apayload = axis.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable", apayload as "Axis"] -> VariableInner as "Variable" {
+            return ReduceProd(xpayload, apayload);
+        })
+    };
+    Variable {payload}
+}
+
+pub fn argmax(x: &Variable, axis: &Axis) -> Variable {
+    let xpayload = x.payload;
+    let apayload = axis.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable", apayload as "Axis"] -> VariableInner as "Variable" {
+            return Argmax(xpayload, apayload);
+        })
+    };
+    Variable {payload}
+}
+
+pub fn argmin(x: &Variable, axis: &Axis) -> Variable {
+    let xpayload = x.payload;
+    let apayload = axis.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable", apayload as "Axis"] -> VariableInner as "Variable" {
+            return Argmin(xpayload, apayload);
+        })
+    };
+    Variable {payload}
+}
+/* unary axis ops end here */
