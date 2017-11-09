@@ -2,12 +2,13 @@
 name = "cntk"
 description = "Wrapper around Microsoft CNTK library"
 license = "Apache-2.0/MIT"
-version = "0.0.4"
+version = "0.0.5"
 authors = ["Vlado Boza <bozavlado@gmail.com>"]
 repository = "https://github.com/usamec/cntk-rs"
 documentation = "https://usamec.github.io/cntk-rs/cntk/"
 readme = "README.md"
 keywords = ["machine-learning", "deep-learning", "neural-networks"]
+categories = [ "api-bindings", "science" ]
 
 build = "build.rs"
 
@@ -19,3 +20,6 @@ cpp = "0.3.2"
 
 [build-dependencies]
 cpp_build = "0.3.2"
+
+[dev-dependencies]
+mnist = "0.4.0"

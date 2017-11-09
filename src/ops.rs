@@ -2,6 +2,16 @@ use variable::{Variable, VariableInner};
 use axis::Axis;
 use shape::Shape;
 
+cpp! {{
+  #include <CNTKLibrary.h>
+  #include <cstdio>
+  #include <vector>
+  #include <iostream>
+
+  using namespace CNTK;
+  using namespace std;
+}}
+
 pub fn transpose_axes(x: &Variable, axis1: &Axis, axis2: &Axis) -> Variable {
     let xpayload = x.payload;
     let a1payload = axis1.payload;
@@ -222,7 +232,7 @@ pub fn sinh(x: &Variable) -> Variable {
     Variable {payload}
 }
 
-pub fn re_lu(x: &Variable) -> Variable {
+pub fn relu(x: &Variable) -> Variable {
     let xpayload = x.payload;
     let payload = unsafe {
         cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
@@ -411,7 +421,12 @@ pub fn plus(x: &Variable, y: &Variable) -> Variable {
     let ypayload = y.payload;
     let payload = unsafe {
         cpp!([xpayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
-            return Plus(xpayload, ypayload);
+            try {
+                return Plus(xpayload, ypayload);
+            } catch (std::exception& e) {
+                printf("Plus throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
     Variable {payload}
@@ -762,33 +777,53 @@ pub fn gumbel_random_like(x: &Variable, loc: f64, scale: f64) -> Variable {
 /* random ops end */
 
 /* convolution */
-pub fn convolution(convmap: &Variable, y: &Variable) -> Variable {
+pub fn convolution(convmap: &Variable, y: &Variable, strides: &Shape) -> Variable {
     let convmappayload = convmap.payload;
     let ypayload = y.payload;
+    let spayload = strides.payload;
     let payload = unsafe {
-        cpp!([convmappayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
-            return Convolution(convmappayload, ypayload);
+        cpp!([convmappayload as "Variable", ypayload as "Variable", spayload as "NDShape"] -> VariableInner as "Variable" {
+            try {
+                return Convolution(convmappayload, ypayload, spayload);
+            } catch (std::exception& e) {
+                printf("Convolution op threw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
     Variable {payload}
 }
 
-pub fn max_pooling(x: &Variable, window_shape: &Shape) -> Variable {
+pub fn max_pooling(x: &Variable, window_shape: &Shape, strides: &Shape) -> Variable {
     let xpayload = x.payload;
     let spayload = window_shape.payload;
+    let stpayload = strides.payload;
     Variable { payload: unsafe {
-        cpp!([xpayload as "Variable", spayload as "NDShape"] -> VariableInner as "Variable" {
-                return Pooling(xpayload, PoolingType::Max, spayload);
+        cpp!([xpayload as "Variable", spayload as "NDShape", stpayload as "NDShape"] -> VariableInner as "Variable" {
+            return Pooling(xpayload, PoolingType::Max, spayload, stpayload);
+        })
+    }}
+}
+
+pub fn avg_pooling(x: &Variable, window_shape: &Shape, strides: &Shape) -> Variable {
+    let xpayload = x.payload;
+    let spayload = window_shape.payload;
+    let stpayload = strides.payload;
+    Variable { payload: unsafe {
+        cpp!([xpayload as "Variable", spayload as "NDShape", stpayload as "NDShape"] -> VariableInner as "Variable" {
+                return Pooling(xpayload, PoolingType::Average, spayload, stpayload);
             })
     }}
 }
 
-pub fn avg_pooling(x: &Variable, window_shape: &Shape) -> Variable {
+pub fn clip(x: &Variable, min: &Variable, max: &Variable) -> Variable {
     let xpayload = x.payload;
-    let spayload = window_shape.payload;
-    Variable { payload: unsafe {
-        cpp!([xpayload as "Variable", spayload as "NDShape"] -> VariableInner as "Variable" {
-                return Pooling(xpayload, PoolingType::Average, spayload);
-            })
-    }}
+    let minpayload = min.payload;
+    let maxpayload = max.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable", minpayload as "Variable", maxpayload as "Variable"] -> VariableInner as "Variable" {
+            return Clip(xpayload, minpayload, maxpayload);
+        })
+    };
+    Variable {payload}
 }

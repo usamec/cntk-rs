@@ -150,31 +150,31 @@ impl Function {
     pub fn inputs(&self) -> Vec<Variable> {
         let payload = self.payload;
         let num_inputs = self.num_inputs();
-        let mut output = Vec::with_capacity(num_inputs);
+        let mut output: Vec<VariableInner> = Vec::with_capacity(num_inputs);
         unsafe {
             output.set_len(num_inputs);
             let mut ptr = output.as_mut_ptr();
             cpp!([payload as "FunctionPtr", mut ptr as "Variable*"] {
                 auto outputs = payload->Inputs();
-                copy(outputs.begin(), outputs.end(), ptr);
+                memcpy(ptr, outputs.data(), sizeof(Variable)*outputs.size());
             })
         }
-        output
+        output.into_iter().map(|x| Variable {payload: x}).collect::<Vec<Variable>>()
     }
 
     pub fn outputs(&self) -> Vec<Variable> {
         let payload = self.payload;
         let num_outputs = self.num_outputs();
-        let mut output = Vec::with_capacity(num_outputs);
+        let mut output: Vec<VariableInner> = Vec::with_capacity(num_outputs);
         unsafe {
             output.set_len(num_outputs);
             let mut ptr = output.as_mut_ptr();
             cpp!([payload as "FunctionPtr", mut ptr as "Variable*"] {
                 auto outputs = payload->Outputs();
-                copy(outputs.begin(), outputs.end(), ptr);
+                memcpy(ptr, outputs.data(), sizeof(Variable)*outputs.size());
             })
         }
-        output
+        output.into_iter().map(|x| Variable {payload: x}).collect::<Vec<Variable>>()
     }
 
     pub fn replace_placeholders(self, placeholder_replacements: &ReplacementMap) -> Function {
@@ -199,16 +199,16 @@ impl Function {
     pub fn parameters(&self) -> Vec<Variable> {
         let payload = self.payload;
         let num_parameters = self.num_parameters();
-        let mut output = Vec::with_capacity(num_parameters);
+        let mut output: Vec<VariableInner> = Vec::with_capacity(num_parameters);
         unsafe {
             output.set_len(num_parameters);
             let mut ptr = output.as_mut_ptr();
             cpp!([payload as "FunctionPtr", mut ptr as "Variable*"] {
                 auto outputs = payload->Parameters();
-                copy(outputs.begin(), outputs.end(), ptr);
+                memcpy(ptr, outputs.data(), sizeof(Variable)*outputs.size());
             })
         }
-        output
+        output.into_iter().map(|x| Variable {payload: x}).collect::<Vec<Variable>>()
     }
 }
 

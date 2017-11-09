@@ -391,11 +391,11 @@ mod tests {
     #[test]
     fn test_max_pooling() {
         test_single_arg_func(|x| {
-            max_pooling(x, &Shape::from_slice(&vec!(2, 2)))
+            max_pooling(x, &Shape::from_slice(&vec!(2, 2)), &Shape::from_slice(&vec!(1)))
         }, &Shape::from_slice(&vec!(3, 3)), &vec!(1., 2., 3., 4., 5., 6., 7., 8., 9.), &vec!(5., 6., 8., 9.));
 
         test_single_arg_func(|x| {
-            max_pooling(x, &Shape::from_slice(&vec!(2)))
+            max_pooling(x, &Shape::from_slice(&vec!(2)), &Shape::from_slice(&vec!(1)))
         }, &Shape::from_slice(&vec!(5)), &vec!(1., 2., 3., 4., 5.), &vec!(2., 3., 4., 5.));
     }
 
@@ -403,7 +403,7 @@ mod tests {
     fn test_1d_convolution() {
         let var = Variable::input_variable(&Shape::from_slice(&vec!(5, 1)));
         let var2 = Variable::parameter(&Shape::from_slice(&vec!(3, 1, 1)), &ParameterInitializer::constant(2.), DeviceDescriptor::cpu());
-        let conv = convolution(&var2, &var);
+        let conv = convolution(&var2, &var, &Shape::from_slice(&vec!(1, 2)));
 
         let data: Vec<f32> = vec!(1.0, 2.0, 3.0, 4.0, 5.0);
         let val = Value::from_vec(&var.shape(), &data, DeviceDescriptor::cpu());
@@ -424,7 +424,7 @@ mod tests {
     fn test_1d_convolution_2() {
         let var = Variable::input_variable(&Shape::from_slice(&vec!(5, 1)));
         let var2 = Variable::parameter(&Shape::from_slice(&vec!(2, 1, 1)), &ParameterInitializer::constant(2.), DeviceDescriptor::cpu());
-        let conv = convolution(&var2, &var);
+        let conv = convolution(&var2, &var, &Shape::from_slice(&vec!(1, 2)));
 
         let data: Vec<f32> = vec!(1.0, 2.0, 3.0, 4.0, 5.0);
         let val = Value::from_vec(&var.shape(), &data, DeviceDescriptor::cpu());
@@ -439,5 +439,28 @@ mod tests {
 
         let result = outdatamap.get(&conv).unwrap().to_vec();
         assert_eq!(result, vec!(6., 10., 14., 18., 10.));
+    }
+
+    #[test]
+    fn test_1d_convolution_multichannel() {
+        let var = Variable::input_variable(&Shape::from_slice(&vec!(3, 2)));
+        let var2 = Variable::parameter(&Shape::from_slice(&vec!(2, 2, 4)), &ParameterInitializer::constant(2.), DeviceDescriptor::cpu());
+        let conv = convolution(&var2, &var, &Shape::from_slice(&vec!(1, 2)));
+
+        let cshape = conv.shape();
+
+        let data: Vec<f32> = vec!(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
+        let val = Value::from_vec(&var.shape(), &data, DeviceDescriptor::cpu());
+
+        let mut datamap = DataMap::new();
+        datamap.add(&var, &val);
+
+        let mut outdatamap = DataMap::new();
+        outdatamap.add_null(&conv);
+
+        Function::from_variable(&conv).evaluate(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
+
+        let result = outdatamap.get(&conv).unwrap().to_vec();
+        assert_eq!(result.len(), 12);
     }
 }
