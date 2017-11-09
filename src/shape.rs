@@ -59,6 +59,16 @@ impl Shape {
             })
         }
     }
+
+    pub fn append_shape(&self, shape: &Shape) -> Shape {
+        let payload = self.payload;
+        let spayload = shape.payload;
+        Shape {payload: unsafe {
+            cpp!([payload as "NDShape", spayload as "NDShape"] -> ShapeInner as "NDShape" {
+                return payload.AppendShape(spayload);
+            })
+        }}
+    }
 }
 
 impl Drop for Shape {

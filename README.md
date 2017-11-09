@@ -34,3 +34,4 @@ Only works with ASCII strings for variable names and filenames.
 * Write some meaningful examples. - Only in tests now.
 * Catch all relevant C++ exceptions
 * Better build scripts.
+* Figure out whether we want NDArrayView or go directly from Rust data to Value and back.

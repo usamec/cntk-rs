@@ -24,6 +24,16 @@ impl Axis {
         }
     }
 
+    pub fn all_static() -> Axis {
+        Axis {
+            payload: unsafe {
+                cpp!([] -> AxisInner as "Axis" {
+                    return Axis::AllStaticAxes();
+                })
+            }
+        }
+    }
+
     pub fn new(number: i32) -> Axis {
         Axis {
             payload: unsafe {
