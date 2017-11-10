@@ -15,7 +15,7 @@ cpp! {{
 
 type BackPropStateInner = [u64; 2usize];
 
-type FunctionInner = [u64; 2usize];
+pub(super) type FunctionInner = [u64; 2usize];
 
 #[derive(Debug)]
 pub struct Function {
@@ -56,12 +56,12 @@ impl Function {
         }
     }
 
-    pub fn to_variable(&self) -> Option<Variable> {
+    pub fn to_variable(&self) -> Result<Variable, &'static str> {
         let payload = self.payload;
         if self.num_outputs() > 1 {
-            None
+            Err("Cannot convert function with multiple outputs into Variable")
         } else {
-            Some(Variable { payload: unsafe {
+            Ok(Variable { payload: unsafe {
                 cpp!([payload as "FunctionPtr"] -> VariableInner as "Variable" {
                     return Variable(payload);
                 })

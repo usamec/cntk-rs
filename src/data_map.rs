@@ -32,8 +32,9 @@ impl DataMap {
     }
 
     /// Adds binding to DataMap. If mapping for given Variable exists, it will be overwritten.
-    pub fn add(&mut self, variable: &Variable, value: &Value) {
-        let var_payload = variable.payload;
+    pub fn add<T: Into<Variable>>(&mut self, variable: T, value: &Value) {
+        let v = variable.into();
+        let var_payload = v.payload;
         let val_payload = value.payload;
         let mut payload = self.payload;
 
@@ -45,8 +46,9 @@ impl DataMap {
     }
 
     /// Adds binding to null to DataMap. Useful, when we want function evaluation to create the Value.
-    pub fn add_null(&mut self, variable: &Variable) {
-        let var_payload = variable.payload;
+    pub fn add_null<T: Into<Variable>>(&mut self, variable: T) {
+        let v = variable.into();
+        let var_payload = v.payload;
         let mut payload = self.payload;
 
         unsafe {
@@ -56,8 +58,9 @@ impl DataMap {
         }
     }
 
-    pub fn get(&self, variable: &Variable) -> Option<Value> {
-        let var_payload = variable.payload;
+    pub fn get<T: Into<Variable>>(&self, variable: T) -> Option<Value> {
+        let v = variable.into();
+        let var_payload = v.payload;
         let payload = self.payload;
 
         let has_var = unsafe {
@@ -112,8 +115,8 @@ mod tests {
         let data: Vec<f32> = vec!(11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 110.0);
 
         let val = Value::batch(&var.shape(), &data, DeviceDescriptor::cpu());
-        map.add(&var, &val);
-        assert_eq!(map.get(&var).is_some(), true);
-        assert_eq!(map.get(&var2).is_some(), false);
+        map.add(var.clone(), &val);
+        assert_eq!(map.get(var).is_some(), true);
+        assert_eq!(map.get(var2).is_some(), false);
     }
 }

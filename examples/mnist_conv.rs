@@ -9,7 +9,7 @@ use cntk::DeviceDescriptor;
 
 use mnist::{Mnist, MnistBuilder};
 
-fn linear_layer(input: &Variable, input_size: usize, output_size: usize) -> Variable {
+/*fn linear_layer(input: &Variable, input_size: usize, output_size: usize) -> Variable {
     let w = Variable::parameter(&Shape::from_slice(&vec!(output_size, input_size)), &ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
     let b = Variable::parameter(&Shape::from_slice(&vec!(output_size)), &ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
     return plus(&b, &times(&w, input));
@@ -27,10 +27,10 @@ fn conv_layer(input: &Variable, input_channels: usize, output_channels: usize, f
 
 fn pooling_layer(input: &Variable, pool_size: usize) -> Variable {
     return max_pooling(input, &Shape::from_slice(&vec!(pool_size, pool_size)), &Shape::from_slice(&vec!(pool_size, pool_size)));
-}
+}*/
 
 fn main() {
-    let x = Variable::input_variable(&Shape::from_slice(&vec!(28,28,1)));
+    /*let x = Variable::input_variable(&Shape::from_slice(&vec!(28,28,1)));
     let y = Variable::input_variable(&Shape::from_slice(&vec!(10)));
     let h1 = conv_layer(&x, 1, 10, 3);
     let h2 = pooling_layer(&h1, 2);
@@ -114,5 +114,5 @@ fn main() {
     prediction_func.evaluate(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
     let result = outdatamap.get(&prediction).unwrap().to_vec();
 
-    println!("error cnt {}/{}", result.iter().zip(val_lbl.iter()).map(|(&r, &l)| r as i32 != l as i32).fold(0, |sum, val| sum + val as i32), result.len());
+    println!("error cnt {}/{}", result.iter().zip(val_lbl.iter()).map(|(&r, &l)| r as i32 != l as i32).fold(0, |sum, val| sum + val as i32), result.len());*/
 }

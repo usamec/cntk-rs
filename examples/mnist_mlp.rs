@@ -9,7 +9,7 @@ use cntk::DeviceDescriptor;
 
 use mnist::{Mnist, MnistBuilder};
 
-fn linear_layer(input: &Variable, input_size: usize, output_size: usize) -> Variable {
+/*fn linear_layer(input: &Variable, input_size: usize, output_size: usize) -> Variable {
     let w = Variable::parameter(&Shape::from_slice(&vec!(output_size, input_size)), &ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
     let b = Variable::parameter(&Shape::from_slice(&vec!(output_size)), &ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
     return plus(&b, &times(&w, input));
@@ -17,10 +17,10 @@ fn linear_layer(input: &Variable, input_size: usize, output_size: usize) -> Vari
 
 fn mlp_layer(input: &Variable, input_size: usize, output_size: usize) -> Variable {
     return tanh(&linear_layer(input, input_size, output_size));
-}
+}*/
 
 fn main() {
-    let x = Variable::input_variable(&Shape::from_slice(&vec!(28*28)));
+    /*let x = Variable::input_variable(&Shape::from_slice(&vec!(28*28)));
     let y = Variable::input_variable(&Shape::from_slice(&vec!(10)));
     let h1 = mlp_layer(&x, 28*28, 200);
     let h2 = mlp_layer(&h1, 200, 200);
@@ -101,5 +101,5 @@ fn main() {
     prediction_func.evaluate(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
     let result = outdatamap.get(&prediction).unwrap().to_vec();
 
-    println!("error cnt {}/{}", result.iter().zip(val_lbl.iter()).map(|(&r, &l)| r as i32 != l as i32).fold(0, |sum, val| sum + val as i32), result.len());
+    println!("error cnt {}/{}", result.iter().zip(val_lbl.iter()).map(|(&r, &l)| r as i32 != l as i32).fold(0, |sum, val| sum + val as i32), result.len());*/
 }

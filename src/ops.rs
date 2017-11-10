@@ -1,6 +1,8 @@
-use variable::{Variable, VariableInner};
+use variable::{Variable, VariableInner, IntoVariable, VariableOrRef};
+use function::{Function, FunctionInner};
 use axis::Axis;
 use shape::Shape;
+use std::borrow::Borrow;
 
 cpp! {{
   #include <CNTKLibrary.h>
@@ -416,11 +418,13 @@ pub fn softplus(x: &Variable) -> Variable {
 
 /* binary ops begin here */
 
-pub fn plus(x: &Variable, y: &Variable) -> Variable {
-    let xpayload = x.payload;
-    let ypayload = y.payload;
+pub fn plus<TT: VariableOrRef, T: IntoVariable<TT>, UU: VariableOrRef, U: IntoVariable<UU>>(x: T, y: U) -> Function {
+    let xv = x.into();
+    let yv = y.into();
+    let xpayload: VariableInner = xv.borrow().payload;
+    let ypayload: VariableInner = yv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
+        cpp!([xpayload as "Variable", ypayload as "Variable"] -> FunctionInner as "FunctionPtr" {
             try {
                 return Plus(xpayload, ypayload);
             } catch (std::exception& e) {
@@ -429,7 +433,7 @@ pub fn plus(x: &Variable, y: &Variable) -> Variable {
             }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
 pub fn minus(x: &Variable, y: &Variable) -> Variable {
