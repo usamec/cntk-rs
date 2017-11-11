@@ -1,3 +1,4 @@
+#[macro_use]
 extern crate cntk;
 extern crate mnist;
 
@@ -9,35 +10,32 @@ use cntk::DeviceDescriptor;
 
 use mnist::{Mnist, MnistBuilder};
 
-/*fn linear_layer(input: &Variable, input_size: usize, output_size: usize) -> Variable {
-    let w = Variable::parameter(&Shape::from_slice(&vec!(output_size, input_size)), &ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
-    let b = Variable::parameter(&Shape::from_slice(&vec!(output_size)), &ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
-    return plus(&b, &times(&w, input));
+fn linear_layer<T: Into<Variable>>(input: T, input_size: usize, output_size: usize) -> Function {
+    let w = Variable::parameter(&Shape::new(&vec!(output_size, input_size)), &ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
+    let b = Variable::parameter(&Shape::new(&vec!(output_size)), &ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
+    return plus(&b, times(&w, input));
 }
 
-fn mlp_layer(input: &Variable, input_size: usize, output_size: usize) -> Variable {
-    return tanh(&linear_layer(input, input_size, output_size));
-}*/
+fn mlp_layer<T: Into<Variable>>(input: T, input_size: usize, output_size: usize) -> Function {
+    return tanh(linear_layer(input, input_size, output_size));
+}
 
 fn main() {
-    /*let x = Variable::input_variable(&Shape::from_slice(&vec!(28*28)));
-    let y = Variable::input_variable(&Shape::from_slice(&vec!(10)));
+    let x = Variable::input_variable(&Shape::new(&vec!(28*28)));
+    let y = Variable::input_variable(&Shape::new(&vec!(10)));
     let h1 = mlp_layer(&x, 28*28, 200);
-    let h2 = mlp_layer(&h1, 200, 200);
-    let output = linear_layer(&h2, 200, 10);
+    let h2 = mlp_layer(h1, 200, 200);
+    let output = linear_layer(h2, 200, 10);
     let prediction = argmax(&output, &Axis::new(0));
-    let loss = reduce_sum_all(&cross_entropy_with_softmax(&output, &y));
-    let error_count = reduce_sum_all(&classification_error(&output, &y));
+    let loss = reduce_sum(&cross_entropy_with_softmax(&output, &y), &Axis::all());
+    let error_count = reduce_sum(&classification_error(&output, &y), &Axis::all());
 
-    let output_func = Function::from_variable(&output);
-    let prediction_func = Function::from_variable(&prediction);
-    let loss_func = Function::from_variable(&loss);
-    let error_count_func = Function::from_variable(&error_count);
-
-    let all_parameters = output_func.parameters();
+    println!("getting params");
+    let all_parameters = output.parameters();
+    println!("getting params done");
 
     let learner = Learner::sgd(&all_parameters.iter().collect::<Vec<&Variable>>(), &DoubleParameterSchedule::constant(0.01));
-    let trainer = Trainer::new_with_evalatuion(&output_func, &loss_func, &error_count_func, &learner);
+    let trainer = Trainer::new_with_evalatuion(&output, &loss, &error_count, &learner);
 
     let (trn_size, rows, cols) = (50_000, 28, 28);
 
@@ -65,13 +63,9 @@ fn main() {
         for batch_num in 0..1000 {
             let value = Value::batch(&x.shape(), &images[batch_num*batch_size*28*28..(batch_num+1)*batch_size*28*28], DeviceDescriptor::cpu());
             let ovalue = Value::batch(&y.shape(), &labels[batch_num*batch_size*10..(batch_num+1)*batch_size*10], DeviceDescriptor::cpu());
-            let mut datamap = DataMap::new();
-            datamap.add(&x, &value);
-            datamap.add(&y, &ovalue);
-            let mut outdatamap = DataMap::new();
-            outdatamap.add_null(&output);
-            outdatamap.add_null(&loss);
-            outdatamap.add_null(&error_count);
+
+            let datamap = datamap!{&x => &value, &y => &ovalue};
+            let mut outdatamap = outdatamap!{&output, &loss, &error_count};
 
             trainer.train_minibatch(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
             let output_val = outdatamap.get(&output).unwrap().to_vec();
@@ -93,13 +87,14 @@ fn main() {
     }
 
     let value = Value::batch(&x.shape(), &val_images, DeviceDescriptor::cpu());
+    // Non macro syntax for datamap initialization, just for an example
     let mut datamap = DataMap::new();
     datamap.add(&x, &value);
     let mut outdatamap = DataMap::new();
     outdatamap.add_null(&prediction);
 
-    prediction_func.evaluate(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
+    prediction.evaluate(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
     let result = outdatamap.get(&prediction).unwrap().to_vec();
 
-    println!("error cnt {}/{}", result.iter().zip(val_lbl.iter()).map(|(&r, &l)| r as i32 != l as i32).fold(0, |sum, val| sum + val as i32), result.len());*/
+    println!("error cnt {}/{}", result.iter().zip(val_lbl.iter()).map(|(&r, &l)| r as i32 != l as i32).fold(0, |sum, val| sum + val as i32), result.len());
 }

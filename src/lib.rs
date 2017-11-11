@@ -4,6 +4,7 @@ extern crate cpp;
 mod shape;
 pub use shape::Shape;
 
+#[macro_use]
 mod variable_set;
 pub use variable_set::VariableSet;
 
@@ -25,9 +26,11 @@ pub use value::Value;
 mod device;
 pub use device::{DeviceDescriptor, set_max_num_cpu_threads};
 
+#[macro_use]
 mod data_map;
 pub use data_map::DataMap;
 
+#[macro_use]
 mod replacement_map;
 pub use replacement_map::ReplacementMap;
 
@@ -44,18 +47,16 @@ mod tests {
     use ops::*;
     #[test]
     fn simple_add() {
-        let var = Variable::input_variable(&Shape::from_slice(&vec!(5)));
-        let var2 = Variable::input_variable(&Shape::from_slice(&vec!(5)));
-        let plus = plus(&var, plus(&var, var2.clone()));
+        let var = Variable::input_variable(&Shape::new(vec!(5)));
+        let var2 = Variable::input_variable(&Shape::new(vec!(5)));
+        let plus = plus(&var, plus(&var, &var2));
         let data: Vec<f32> = vec!(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0);
         let data2: Vec<f32> = vec!(11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 110.0);
         let val = Value::batch(&var.shape(), &data, DeviceDescriptor::cpu());
         let val2 = Value::batch(&var2.shape(), &data2, DeviceDescriptor::cpu());
-        let mut datamap = DataMap::new();
-        datamap.add(var, &val);
-        datamap.add(var2, &val2);
-        let mut outdatamap = DataMap::new();
-        outdatamap.add_null(&plus);
+
+        let datamap = datamap!{var => &val, var2 => &val2};
+        let mut outdatamap = outdatamap!{&plus};
 
         plus.evaluate(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
 
@@ -63,7 +64,7 @@ mod tests {
         assert_eq!(result, vec!(13., 16., 19., 22., 25., 28., 31., 34., 37., 130.));
     }
 
-    /*#[test]
+    #[test]
     fn gradient() {
         let var = Variable::input_variable_with_gradient(&Shape::scalar());
         let var2 = Variable::input_variable_with_gradient(&Shape::scalar());
@@ -86,12 +87,9 @@ mod tests {
         let mut outdatamap = DataMap::new();
         outdatamap.add_null(&out);
 
-        let mut retain_state = VariableSet::new();
-        retain_state.add(&out);
+        let retain_state = variableset!{&out};
 
-        let of = Function::from_variable(&out);
-
-        let bpstate = of.forward(&datamap, &mut outdatamap, DeviceDescriptor::cpu(), &retain_state, &VariableSet::new());
+        let bpstate = out.forward(&datamap, &mut outdatamap, DeviceDescriptor::cpu(), &retain_state, &VariableSet::new());
         let out_val = outdatamap.get(&out).unwrap();
 
         let mut result = DataMap::new();
@@ -102,7 +100,7 @@ mod tests {
         let rootgrad = Value::from_vec(&out_val.shape(), &(vec![1.; out_val.shape().total_size()]), DeviceDescriptor::cpu());
         rgvalues.add(&out, &rootgrad);
 
-        of.backward(&bpstate, &rgvalues, &mut result);
+        out.backward(&bpstate, &rgvalues, &mut result);
 
         assert_eq!(result.get(&var2).unwrap().to_vec(), vec!(4., 7.));
         assert_eq!(result.get(&var3).unwrap().to_vec(), vec!(1., 1.));
@@ -117,58 +115,59 @@ mod tests {
     #[test]
     fn feedforward_net_training() {
         set_max_num_cpu_threads(1);
-        let x = Variable::input_variable_with_name(&Shape::from_slice(&vec!(3)), "X");
-        let y = Variable::input_variable_with_name(&Shape::from_slice(&vec!(1)), "Y");
-        let w1 = Variable::parameter(&Shape::from_slice(&vec!(20, 3)), &ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
-        let b1 = Variable::parameter(&Shape::from_slice(&vec!(20)), &ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
-        let w2 = Variable::parameter(&Shape::from_slice(&vec!(1, 20)), &ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
-        let b2 = Variable::parameter(&Shape::from_slice(&vec!(1)), &ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
+        {
+            let x = Variable::input_variable_with_name(&Shape::new(&vec!(3)), "X");
+            let y = Variable::input_variable_with_name(&Shape::new(&vec!(1)), "Y");
+            let w1 = Variable::parameter(&Shape::new(&vec!(20, 3)), &ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
+            let b1 = Variable::parameter(&Shape::new(&vec!(20)), &ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
+            let w2 = Variable::parameter(&Shape::new(&vec!(1, 20)), &ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
+            let b2 = Variable::parameter(&Shape::new(&vec!(1)), &ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
 
-        let hidden_value = tanh(&plus(&times(&w1, &x), &b1));
-        let output_value = named_alias(&plus(&times(&w2, &hidden_value), &b2), "output");
-        let error = reduce_sum_all(&squared_error(&output_value, &y));
+            let hidden_value = tanh(plus(times(&w1, &x), &b1));
+            let output_value = named_alias(plus(times(&w2, &hidden_value), &b2), "output");
+            let error = reduce_sum(squared_error(&output_value, &y), &Axis::all());
 
-        let output_func = Function::from_variable(&output_value);
-        let error_func = Function::from_variable(&error);
+            let output_func = Function::from_variable(&output_value);
+            let error_func = Function::from_variable(&error);
 
-        let mut rng_seed = 47;
+            let mut rng_seed = 47;
 
-        let learner = Learner::sgd(&vec!(&w1, &b1, &w2, &b2), &DoubleParameterSchedule::constant(0.01));
-        let trainer = Trainer::new(&output_func, &error_func, &learner);
-        let mut lastloss = 1000000.0;
+            let learner = Learner::sgd(&vec!(&w1, &b1, &w2, &b2), &DoubleParameterSchedule::constant(0.01));
+            let trainer = Trainer::new(&output_func, &error_func, &learner);
+            let mut lastloss = 1000000.0;
 
-        for iter in 0..5000 {
-            let data = vec!(rng_next(&mut rng_seed), rng_next(&mut rng_seed), rng_next(&mut rng_seed),
-                            rng_next(&mut rng_seed), rng_next(&mut rng_seed), rng_next(&mut rng_seed));
-            let odata = vec!(data[0]*data[1] + data[2],
-                             data[3]*data[4] + data[5]);
-            let value = Value::batch(&x.shape(), &data, DeviceDescriptor::cpu());
-            let ovalue = Value::batch(&y.shape(), &odata, DeviceDescriptor::cpu());
-            let mut datamap = DataMap::new();
-            datamap.add(&x, &value);
-            datamap.add(&y, &ovalue);
-            let mut outdatamap = DataMap::new();
-            outdatamap.add_null(&output_value);
-            outdatamap.add_null(&error);
+            for iter in 0..5000 {
+                let data = vec!(rng_next(&mut rng_seed), rng_next(&mut rng_seed), rng_next(&mut rng_seed),
+                               rng_next(&mut rng_seed), rng_next(&mut rng_seed), rng_next(&mut rng_seed));
+                let odata = vec!(data[0] * data[1] + data[2],
+                                data[3] * data[4] + data[5]);
+                let value = Value::batch(&x.shape(), &data, DeviceDescriptor::cpu());
+                let ovalue = Value::batch(&y.shape(), &odata, DeviceDescriptor::cpu());
+                let mut datamap = DataMap::new();
+                datamap.add(&x, &value);
+                datamap.add(&y, &ovalue);
+                let mut outdatamap = DataMap::new();
+                outdatamap.add_null(&output_value);
+                outdatamap.add_null(&error);
 
-            trainer.train_minibatch(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
-            let result = outdatamap.get(&output_value).unwrap().to_vec();
-            let loss = outdatamap.get(&error).unwrap().to_vec();
-            lastloss = loss[0];
+                trainer.train_minibatch(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
+                let result = outdatamap.get(&output_value).unwrap().to_vec();
+                let loss = outdatamap.get(&error).unwrap().to_vec();
+                lastloss = loss[0];
+            }
+            assert!(lastloss < 0.1);
+            output_value.save("test.dat");
         }
-        assert!(lastloss < 0.1);
-
-        output_func.save("test.dat");
 
         {
             let func_loaded = Function::load("test.dat", DeviceDescriptor::cpu());
             let inputs = func_loaded.inputs();
 
             let outputs = func_loaded.outputs();
+            let loaded_input = inputs.into_iter().find(|x| x.name() == "X").unwrap();
+            let loaded_output = outputs.into_iter().find(|x| x.name() == "output").unwrap();
 
-            let loaded_input = inputs.iter().find(|x| x.name() == "X").unwrap();
-            let loaded_output = outputs.iter().find(|x| x.name() == "output").unwrap();
-
+            let mut rng_seed = 227;
             let data = vec!(rng_next(&mut rng_seed), rng_next(&mut rng_seed), rng_next(&mut rng_seed),
                            rng_next(&mut rng_seed), rng_next(&mut rng_seed), rng_next(&mut rng_seed));
             let odata = vec!(data[0]*data[1] + data[2],
@@ -181,26 +180,26 @@ mod tests {
 
             func_loaded.evaluate(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
 
-            let result = outdatamap.get(&loaded_output).unwrap().to_vec();
-            assert!((result[0] - odata[0]).abs() < 0.05);
-            assert!((result[1] - odata[1]).abs() < 0.05);
+            let result = outdatamap.get(loaded_output).unwrap().to_vec();
+            assert!((result[0] - odata[0]).abs() < 0.1);
+            assert!((result[1] - odata[1]).abs() < 0.1);
         }
     }
 
     #[test]
     fn classification_net_training() {
         set_max_num_cpu_threads(1);
-        let x = Variable::input_variable(&Shape::from_slice(&vec!(2)));
-        let y = Variable::input_variable(&Shape::from_slice(&vec!(3)));
-        let w1 = Variable::parameter(&Shape::from_slice(&vec!(20, 2)), &ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
-        let b1 = Variable::parameter(&Shape::from_slice(&vec!(20)), &ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
-        let w2 = Variable::parameter(&Shape::from_slice(&vec!(3, 20)), &ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
-        let b2 = Variable::parameter(&Shape::from_slice(&vec!(3)), &ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
+        let x = Variable::input_variable(&Shape::new(&vec!(2)));
+        let y = Variable::input_variable(&Shape::new(&vec!(3)));
+        let w1 = Variable::parameter(&Shape::new(&vec!(20, 2)), &ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
+        let b1 = Variable::parameter(&Shape::new(&vec!(20)), &ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
+        let w2 = Variable::parameter(&Shape::new(&vec!(3, 20)), &ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
+        let b2 = Variable::parameter(&Shape::new(&vec!(3)), &ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
 
         let hidden_value = tanh(&plus(&times(&w1, &x), &b1));
         let output_value = plus(&times(&w2, &hidden_value), &b2);
-        let loss = reduce_sum_all(&cross_entropy_with_softmax(&output_value, &y));
-        let wrong_labels = reduce_sum_all(&classification_error(&output_value, &y));
+        let loss = reduce_sum(&cross_entropy_with_softmax(&output_value, &y), &Axis::all());
+        let wrong_labels = reduce_sum(&classification_error(&output_value, &y), &Axis::all());
 
 
         let output_func = Function::from_variable(&output_value);
@@ -248,14 +247,13 @@ mod tests {
 
     #[test]
     fn simple_recurrence() {
-        let x = Variable::input_variable(&Shape::from_slice(&vec!(2)));
-        let y = Variable::input_variable(&Shape::from_slice(&vec!(2)));
-        let placeholder = Variable::placeholder(&Shape::from_slice(&vec!(2)));
+        let x = Variable::input_variable(&Shape::new(&vec!(2)));
+        let y = Variable::input_variable(&Shape::new(&vec!(2)));
+        let placeholder = Variable::placeholder(&Shape::new(&vec!(2)));
         let output = plus(&placeholder, &element_times(&x, &y));
         let placeholder_replacement = past_value(&output);
 
-        let mut replacement_map = ReplacementMap::new();
-        replacement_map.add(&placeholder, &placeholder_replacement);
+        let replacement_map = replacementmap!{&placeholder => &placeholder_replacement};
 
         let output_function = Function::from_variable(&output).replace_placeholders(&replacement_map);
 
@@ -288,7 +286,7 @@ mod tests {
     }
 
     fn test_single_arg_func<F>(f: F, input_shape: &Shape, input: &[f32], expected_output: &[f32])
-        where F: Fn(&Variable) -> Variable {
+        where F: Fn(&Variable) -> Function {
         let var = Variable::input_variable(input_shape);
         let out = f(&var);
         let val = Value::batch(&var.shape(), input, DeviceDescriptor::cpu());
@@ -305,13 +303,13 @@ mod tests {
     fn test_transpose() {
         test_single_arg_func(|x| {
             transpose_axes(x, &Axis::new(0), &Axis::new(1))
-        }, &Shape::from_slice(&vec!(2, 3)), &vec!(1., 2., 3., 4., 5., 6.), &vec!(1., 3., 5., 2., 4., 6.));
+        }, &Shape::new(&vec!(2, 3)), &vec!(1., 2., 3., 4., 5., 6.), &vec!(1., 3., 5., 2., 4., 6.));
     }
 
     #[test]
     fn test_splice() {
-        let var = Variable::input_variable(&Shape::from_slice(&vec!(2, 3)));
-        let var2 = Variable::input_variable(&Shape::from_slice(&vec!(2, 3)));
+        let var = Variable::input_variable(&Shape::new(&vec!(2, 3)));
+        let var2 = Variable::input_variable(&Shape::new(&vec!(2, 3)));
         let splice = splice(&vec!(&var, &var2), &Axis::new(0));
 
         let data: Vec<f32> = vec!(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
@@ -335,8 +333,8 @@ mod tests {
 
     #[test]
     fn test_splice2() {
-        let var = Variable::input_variable(&Shape::from_slice(&vec!(2, 3)));
-        let var2 = Variable::input_variable(&Shape::from_slice(&vec!(2, 3)));
+        let var = Variable::input_variable(&Shape::new(&vec!(2, 3)));
+        let var2 = Variable::input_variable(&Shape::new(&vec!(2, 3)));
         let splice = splice(&vec!(&var, &var2), &Axis::new(1));
 
         let data: Vec<f32> = vec!(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
@@ -362,44 +360,44 @@ mod tests {
     fn test_slice() {
         test_single_arg_func(|x| {
             slice(x, &vec!(&Axis::new(0)), &vec!(0), &vec!(1))
-        }, &Shape::from_slice(&vec!(2, 3)), &vec!(1., 2., 3., 4., 5., 6.), &vec!(1., 3., 5.));
+        }, &Shape::new(&vec!(2, 3)), &vec!(1., 2., 3., 4., 5., 6.), &vec!(1., 3., 5.));
 
         test_single_arg_func(|x| {
             slice(x, &vec!(&Axis::new(1)), &vec!(0), &vec!(2))
-        }, &Shape::from_slice(&vec!(2, 3)), &vec!(1., 2., 3., 4., 5., 6.), &vec!(1., 2., 3., 4.));
+        }, &Shape::new(&vec!(2, 3)), &vec!(1., 2., 3., 4., 5., 6.), &vec!(1., 2., 3., 4.));
     }
 
     #[test]
     fn test_reduce() {
         test_single_arg_func(|x| {
             reduce_sum(x, &Axis::new(0))
-        }, &Shape::from_slice(&vec!(2, 3)), &vec!(1., 2., 3., 4., 5., 6.), &vec!(3., 7., 11.));
+        }, &Shape::new(&vec!(2, 3)), &vec!(1., 2., 3., 4., 5., 6.), &vec!(3., 7., 11.));
 
         test_single_arg_func(|x| {
             reduce_sum(x, &Axis::new(1))
-        }, &Shape::from_slice(&vec!(2, 3)), &vec!(1., 2., 3., 4., 5., 6.), &vec!(9., 12.));
+        }, &Shape::new(&vec!(2, 3)), &vec!(1., 2., 3., 4., 5., 6.), &vec!(9., 12.));
 
         test_single_arg_func(|x| {
             reduce_sum(x, &Axis::all())
-        }, &Shape::from_slice(&vec!(2, 3)), &vec!(1., 2., 3., 4., 5., 6.), &vec!(21.));
+        }, &Shape::new(&vec!(2, 3)), &vec!(1., 2., 3., 4., 5., 6.), &vec!(21.));
     }
 
     #[test]
     fn test_max_pooling() {
         test_single_arg_func(|x| {
-            max_pooling(x, &Shape::from_slice(&vec!(2, 2)), &Shape::from_slice(&vec!(1)))
-        }, &Shape::from_slice(&vec!(3, 3)), &vec!(1., 2., 3., 4., 5., 6., 7., 8., 9.), &vec!(5., 6., 8., 9.));
+            max_pooling(x, &Shape::new(&vec!(2, 2)), &Shape::new(&vec!(1)))
+        }, &Shape::new(&vec!(3, 3)), &vec!(1., 2., 3., 4., 5., 6., 7., 8., 9.), &vec!(5., 6., 8., 9.));
 
         test_single_arg_func(|x| {
-            max_pooling(x, &Shape::from_slice(&vec!(2)), &Shape::from_slice(&vec!(1)))
-        }, &Shape::from_slice(&vec!(5)), &vec!(1., 2., 3., 4., 5.), &vec!(2., 3., 4., 5.));
+            max_pooling(x, &Shape::new(&vec!(2)), &Shape::new(&vec!(1)))
+        }, &Shape::new(&vec!(5)), &vec!(1., 2., 3., 4., 5.), &vec!(2., 3., 4., 5.));
     }
 
     #[test]
     fn test_1d_convolution() {
-        let var = Variable::input_variable(&Shape::from_slice(&vec!(5, 1)));
-        let var2 = Variable::parameter(&Shape::from_slice(&vec!(3, 1, 1)), &ParameterInitializer::constant(2.), DeviceDescriptor::cpu());
-        let conv = convolution(&var2, &var, &Shape::from_slice(&vec!(1, 2)));
+        let var = Variable::input_variable(&Shape::new(&vec!(5, 1)));
+        let var2 = Variable::parameter(&Shape::new(&vec!(3, 1, 1)), &ParameterInitializer::constant(2.), DeviceDescriptor::cpu());
+        let conv = convolution(&var2, &var, &Shape::new(&vec!(1, 2)));
 
         let data: Vec<f32> = vec!(1.0, 2.0, 3.0, 4.0, 5.0);
         let val = Value::from_vec(&var.shape(), &data, DeviceDescriptor::cpu());
@@ -418,9 +416,9 @@ mod tests {
 
     #[test]
     fn test_1d_convolution_2() {
-        let var = Variable::input_variable(&Shape::from_slice(&vec!(5, 1)));
-        let var2 = Variable::parameter(&Shape::from_slice(&vec!(2, 1, 1)), &ParameterInitializer::constant(2.), DeviceDescriptor::cpu());
-        let conv = convolution(&var2, &var, &Shape::from_slice(&vec!(1, 2)));
+        let var = Variable::input_variable(&Shape::new(&vec!(5, 1)));
+        let var2 = Variable::parameter(&Shape::new(&vec!(2, 1, 1)), &ParameterInitializer::constant(2.), DeviceDescriptor::cpu());
+        let conv = convolution(&var2, &var, &Shape::new(&vec!(1, 2)));
 
         let data: Vec<f32> = vec!(1.0, 2.0, 3.0, 4.0, 5.0);
         let val = Value::from_vec(&var.shape(), &data, DeviceDescriptor::cpu());
@@ -439,11 +437,9 @@ mod tests {
 
     #[test]
     fn test_1d_convolution_multichannel() {
-        let var = Variable::input_variable(&Shape::from_slice(&vec!(3, 2)));
-        let var2 = Variable::parameter(&Shape::from_slice(&vec!(2, 2, 4)), &ParameterInitializer::constant(2.), DeviceDescriptor::cpu());
-        let conv = convolution(&var2, &var, &Shape::from_slice(&vec!(1, 2)));
-
-        let cshape = conv.shape();
+        let var = Variable::input_variable(&Shape::new(&vec!(3, 2)));
+        let var2 = Variable::parameter(&Shape::new(&vec!(2, 2, 4)), &ParameterInitializer::constant(2.), DeviceDescriptor::cpu());
+        let conv = convolution(&var2, &var, &Shape::new(&vec!(1, 2)));
 
         let data: Vec<f32> = vec!(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
         let val = Value::from_vec(&var.shape(), &data, DeviceDescriptor::cpu());
@@ -458,5 +454,5 @@ mod tests {
 
         let result = outdatamap.get(&conv).unwrap().to_vec();
         assert_eq!(result.len(), 12);
-    }*/
+    }
 }

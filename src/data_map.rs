@@ -94,6 +94,40 @@ impl Drop for DataMap {
     }
 }
 
+#[macro_export]
+macro_rules! datamap {
+    (@single $($x:tt)*) => (());
+    (@count $($rest:expr),*) => (<[()]>::len(&[$(datamap!(@single $rest)),*]));
+
+    ($($key:expr => $value:expr,)+) => { datamap!($($key => $value),+) };
+    ($($key:expr => $value:expr),*) => {
+        {
+            let mut _map = DataMap::new();
+            $(
+                _map.add($key, $value);
+            )*
+            _map
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! outdatamap {
+    (@single $($x:tt)*) => (());
+    (@count $($rest:expr),*) => (<[()]>::len(&[$(outdatamap!(@single $rest)),*]));
+    
+    ($($key:expr,)+) => { outdatamap!($($key),+) };
+    ($($key:expr),*) => {
+        {
+            let mut _set = DataMap::new();
+            $(
+                _set.add_null($key);
+            )*
+            _set
+        }
+    };
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

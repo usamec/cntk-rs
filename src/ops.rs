@@ -1,4 +1,4 @@
-use variable::{Variable, VariableInner, IntoVariable, VariableOrRef};
+use variable::{Variable, VariableInner};
 use function::{Function, FunctionInner};
 use axis::Axis;
 use shape::Shape;
@@ -14,62 +14,77 @@ cpp! {{
   using namespace std;
 }}
 
-pub fn transpose_axes(x: &Variable, axis1: &Axis, axis2: &Axis) -> Variable {
-    let xpayload = x.payload;
+pub fn transpose_axes<T: Into<Variable>>(x: T, axis1: &Axis, axis2: &Axis) -> Function {
+    let xv = x.into();
+    let xpayload = xv.payload;
     let a1payload = axis1.payload;
     let a2payload = axis2.payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", a1payload as "Axis", a2payload as "Axis"] -> VariableInner as "Variable" {
-            return TransposeAxes(xpayload, a1payload, a2payload);
+        cpp!([xpayload as "Variable", a1payload as "Axis", a2payload as "Axis"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return TransposeAxes(xpayload, a1payload, a2payload);
+            } catch (std::exception& e) {
+                printf("TransposeAxes throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable { payload }
+    Function { payload }
 }
 
-pub fn dropout(x: &Variable, dropout_rate: f64) -> Variable {
-    let xpayload = x.payload;
+pub fn dropout<T: Into<Variable>>(x: T, dropout_rate: f64) -> Function {
+    let xv = x.into();
+    let xpayload = xv.payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", dropout_rate as "double"] -> VariableInner as "Variable" {
-            return Dropout(xpayload, dropout_rate);
+        cpp!([xpayload as "Variable", dropout_rate as "double"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Dropout(xpayload, dropout_rate);
+            } catch (std::exception& e) {
+                printf("Dropout throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function { payload }
 }
 
-pub fn reduce_sum_all(x: &Variable) -> Variable {
-    let xpayload = x.payload;
-    let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return ReduceSum(xpayload, Axis::AllAxes());
-        })
-    };
-    Variable {payload}
-}
-
-pub fn splice(variables: &[&Variable], axis: &Axis) -> Variable {
+// TODO: Make this more friendly
+pub fn splice(variables: &[&Variable], axis: &Axis) -> Function {
     let data: Vec<Variable> = variables.iter().map(|&x| x.clone()).collect();
     let data_ptr = data.as_ptr();
     let data_size = data.len();
     let apayload = axis.payload;
-    Variable { payload: unsafe {
-        cpp!([data_ptr as "Variable*", data_size as "size_t", apayload as "Axis"] -> VariableInner as "Variable" {
+    Function { payload: unsafe {
+        cpp!([data_ptr as "Variable*", data_size as "size_t", apayload as "Axis"] -> FunctionInner as "FunctionPtr" {
+            try {
                 return Splice(vector<Variable>(data_ptr, data_ptr + data_size), apayload);
-            })
+            } catch (std::exception& e) {
+                printf("Splice throw an exception %s\n", e.what());
+                throw e;
+            }
+        })
     }}
 }
 
-pub fn reshape(x: &Variable, shape: &Shape) -> Variable {
-    let xpayload = x.payload;
+pub fn reshape<T: Into<Variable>>(x: T, shape: &Shape) -> Function {
+    let xv = x.into();
+    let xpayload = xv.payload;
     let spayload = shape.payload;
-    Variable { payload: unsafe {
-        cpp!([xpayload as "Variable", spayload as "NDShape"] -> VariableInner as "Variable" {
+    Function { payload: unsafe {
+        cpp!([xpayload as "Variable", spayload as "NDShape"] -> FunctionInner as "FunctionPtr" {
+            try {
                 return Reshape(xpayload, spayload);
-            })
+            } catch (std::exception& e) {
+                printf("Reshape throw an exception %s\n", e.what());
+                throw e;
+            }
+        })
     }}
 }
 
-pub fn slice(x: &Variable, axis: &[&Axis], begin_index: &[i32], end_index: &[i32]) -> Variable {
-    let xpayload = x.payload;
+pub fn slice<T: Into<Variable>>(x: T, axis: &[&Axis], begin_index: &[i32], end_index: &[i32]) -> Function {
+    let xv = x.into();
+    let xpayload = xv.payload;
     assert_eq!(axis.len(), begin_index.len());
     assert_eq!(axis.len(), end_index.len());
     let len = axis.len();
@@ -78,22 +93,28 @@ pub fn slice(x: &Variable, axis: &[&Axis], begin_index: &[i32], end_index: &[i32
     let bdata_ptr = begin_index.as_ptr();
     let edata_ptr = end_index.as_ptr();
 
-    Variable { payload: unsafe {
-        cpp!([xpayload as "Variable", adata_ptr as "Axis*", len as "size_t", bdata_ptr as "int*", edata_ptr as "int*"] -> VariableInner as "Variable" {
+    Function { payload: unsafe {
+        cpp!([xpayload as "Variable", adata_ptr as "Axis*", len as "size_t", bdata_ptr as "int*", edata_ptr as "int*"] -> FunctionInner as "FunctionPtr" {
+            try {
                 return Slice(xpayload,
                              vector<Axis>(adata_ptr, adata_ptr + len),
                              vector<int>(bdata_ptr, bdata_ptr + len),
                              vector<int>(edata_ptr, edata_ptr + len));
-            })
+            } catch (std::exception& e) {
+                printf("Slice throw an exception %s\n", e.what());
+                throw e;
+            }
+        })
     }}
 }
 
-pub fn named_alias(x: &Variable, name: &str) -> Variable {
-    let xpayload = x.payload;
+pub fn named_alias<T: Into<Variable>>(x: T, name: &str) -> Function {
+    let xv = x.into();
+    let xpayload = xv.payload;
     let name_ptr = name.as_ptr();
     let name_len = name.len();
-    Variable { payload: unsafe {
-        cpp!([xpayload as "Variable", name_ptr as "char*", name_len as "size_t"] -> VariableInner as "Variable" {
+    Function { payload: unsafe {
+        cpp!([xpayload as "Variable", name_ptr as "char*", name_len as "size_t"] -> FunctionInner as "FunctionPtr" {
                 string name(name_ptr, name_ptr + name_len);
                 wstring wname;
                 wname.assign(name.begin(), name.end());
@@ -102,323 +123,508 @@ pub fn named_alias(x: &Variable, name: &str) -> Variable {
     }}
 }
 
-pub fn past_value(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn past_value<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload = xv.payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
             return PastValue(xpayload);
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn future_value(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn future_value<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload = xv.payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
             return FutureValue(xpayload);
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn first(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn first<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload = xv.payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
             return Sequence::First(xpayload);
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn last(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn last<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload = xv.payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
             return Sequence::Last(xpayload);
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
 /* unary ops begin here */
 
-pub fn negate(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+
+pub fn negate<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return Negate(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Negate(xpayload);
+            } catch (std::exception& e) {
+                printf("Negate throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn sigmoid(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn sigmoid<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return Sigmoid(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Sigmoid(xpayload);
+            } catch (std::exception& e) {
+                printf("Sigmoid throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn tanh(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn tanh<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return Tanh(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Tanh(xpayload);
+            } catch (std::exception& e) {
+                printf("Tanh throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn asin(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn asin<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return Asin(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Asin(xpayload);
+            } catch (std::exception& e) {
+                printf("Asin throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn sin(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn sin<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return Sin(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Sin(xpayload);
+            } catch (std::exception& e) {
+                printf("Sin throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn acos(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn acos<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return Acos(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Acos(xpayload);
+            } catch (std::exception& e) {
+                printf("Acos throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn cos(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn cos<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return Cos(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Cos(xpayload);
+            } catch (std::exception& e) {
+                printf("Cos throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn cosh(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn cosh<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return Cosh(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Cosh(xpayload);
+            } catch (std::exception& e) {
+                printf("Cosh throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn sinh(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn sinh<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return Sinh(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Sinh(xpayload);
+            } catch (std::exception& e) {
+                printf("Sinh throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn relu(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn relu<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return ReLU(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return ReLU(xpayload);
+            } catch (std::exception& e) {
+                printf("ReLU throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn exp(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn exp<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return Exp(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Exp(xpayload);
+            } catch (std::exception& e) {
+                printf("Exp throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn log(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn log<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return Log(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Log(xpayload);
+            } catch (std::exception& e) {
+                printf("Log throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn square(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn square<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return Square(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Square(xpayload);
+            } catch (std::exception& e) {
+                printf("Square throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn sqrt(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn sqrt<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return Sqrt(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Sqrt(xpayload);
+            } catch (std::exception& e) {
+                printf("Sqrt throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn round(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn round<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return Round(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Round(xpayload);
+            } catch (std::exception& e) {
+                printf("Round throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn floor(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn floor<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return Floor(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Floor(xpayload);
+            } catch (std::exception& e) {
+                printf("Floor throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn ceil(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn ceil<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return Ceil(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Ceil(xpayload);
+            } catch (std::exception& e) {
+                printf("Ceil throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn abs(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn abs<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return Abs(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Abs(xpayload);
+            } catch (std::exception& e) {
+                printf("Abs throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn reciprocal(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn reciprocal<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return Reciprocal(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Reciprocal(xpayload);
+            } catch (std::exception& e) {
+                printf("Reciprocal throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn softmax(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn softmax<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return Softmax(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Softmax(xpayload);
+            } catch (std::exception& e) {
+                printf("Softmax throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn hardmax(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn hardmax<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return Hardmax(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Hardmax(xpayload);
+            } catch (std::exception& e) {
+                printf("Hardmax throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn transpose(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn transpose<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return Transpose(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Transpose(xpayload);
+            } catch (std::exception& e) {
+                printf("Transpose throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn to_batch(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn to_batch<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return ToBatch(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return ToBatch(xpayload);
+            } catch (std::exception& e) {
+                printf("ToBatch throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn stop_gradient(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn alias<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return StopGradient(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Alias(xpayload);
+            } catch (std::exception& e) {
+                printf("Alias throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn elu(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn stop_gradient<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return ELU(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return StopGradient(xpayload);
+            } catch (std::exception& e) {
+                printf("StopGradient throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn leaky_re_lu(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn elu<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return LeakyReLU(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return ELU(xpayload);
+            } catch (std::exception& e) {
+                printf("ELU throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn softplus(x: &Variable) -> Variable {
-    let xpayload = x.payload;
+pub fn leaky_relu<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable"] -> VariableInner as "Variable" {
-            return Softplus(xpayload);
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return LeakyReLU(xpayload);
+            } catch (std::exception& e) {
+                printf("LeakyReLU throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
+
+pub fn softplus<T: Into<Variable>>(x: T) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Softplus(xpayload);
+            } catch (std::exception& e) {
+                printf("Softplus throw an exception %s\n", e.what());
+                throw e;
+            }
+        })
+    };
+    Function {payload}
+}
+
 
 /* unary ops end here */
 
 /* binary ops begin here */
 
-pub fn plus<TT: VariableOrRef, T: IntoVariable<TT>, UU: VariableOrRef, U: IntoVariable<UU>>(x: T, y: U) -> Function {
+
+pub fn plus<T: Into<Variable>, U: Into<Variable>>(x: T, y: U) -> Function {
     let xv = x.into();
     let yv = y.into();
     let xpayload: VariableInner = xv.borrow().payload;
@@ -436,357 +642,549 @@ pub fn plus<TT: VariableOrRef, T: IntoVariable<TT>, UU: VariableOrRef, U: IntoVa
     Function {payload}
 }
 
-pub fn minus(x: &Variable, y: &Variable) -> Variable {
-    let xpayload = x.payload;
-    let ypayload = y.payload;
+pub fn minus<T: Into<Variable>, U: Into<Variable>>(x: T, y: U) -> Function {
+    let xv = x.into();
+    let yv = y.into();
+    let xpayload: VariableInner = xv.borrow().payload;
+    let ypayload: VariableInner = yv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
-            return Minus(xpayload, ypayload);
+        cpp!([xpayload as "Variable", ypayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Minus(xpayload, ypayload);
+            } catch (std::exception& e) {
+                printf("Minus throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn log_add_exp(x: &Variable, y: &Variable) -> Variable {
-    let xpayload = x.payload;
-    let ypayload = y.payload;
+pub fn log_add_exp<T: Into<Variable>, U: Into<Variable>>(x: T, y: U) -> Function {
+    let xv = x.into();
+    let yv = y.into();
+    let xpayload: VariableInner = xv.borrow().payload;
+    let ypayload: VariableInner = yv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
-            return LogAddExp(xpayload, ypayload);
+        cpp!([xpayload as "Variable", ypayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return LogAddExp(xpayload, ypayload);
+            } catch (std::exception& e) {
+                printf("LogAddExp throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn pow(x: &Variable, y: &Variable) -> Variable {
-    let xpayload = x.payload;
-    let ypayload = y.payload;
+pub fn pow<T: Into<Variable>, U: Into<Variable>>(x: T, y: U) -> Function {
+    let xv = x.into();
+    let yv = y.into();
+    let xpayload: VariableInner = xv.borrow().payload;
+    let ypayload: VariableInner = yv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
-            return Pow(xpayload, ypayload);
+        cpp!([xpayload as "Variable", ypayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Pow(xpayload, ypayload);
+            } catch (std::exception& e) {
+                printf("Pow throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn element_times(x: &Variable, y: &Variable) -> Variable {
-    let xpayload = x.payload;
-    let ypayload = y.payload;
+pub fn element_times<T: Into<Variable>, U: Into<Variable>>(x: T, y: U) -> Function {
+    let xv = x.into();
+    let yv = y.into();
+    let xpayload: VariableInner = xv.borrow().payload;
+    let ypayload: VariableInner = yv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
-            return ElementTimes(xpayload, ypayload);
+        cpp!([xpayload as "Variable", ypayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return ElementTimes(xpayload, ypayload);
+            } catch (std::exception& e) {
+                printf("ElementTimes throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn element_divide(x: &Variable, y: &Variable) -> Variable {
-    let xpayload = x.payload;
-    let ypayload = y.payload;
+pub fn element_divide<T: Into<Variable>, U: Into<Variable>>(x: T, y: U) -> Function {
+    let xv = x.into();
+    let yv = y.into();
+    let xpayload: VariableInner = xv.borrow().payload;
+    let ypayload: VariableInner = yv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
-            return ElementDivide(xpayload, ypayload);
+        cpp!([xpayload as "Variable", ypayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return ElementDivide(xpayload, ypayload);
+            } catch (std::exception& e) {
+                printf("ElementDivide throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn equal(x: &Variable, y: &Variable) -> Variable {
-    let xpayload = x.payload;
-    let ypayload = y.payload;
+pub fn equal<T: Into<Variable>, U: Into<Variable>>(x: T, y: U) -> Function {
+    let xv = x.into();
+    let yv = y.into();
+    let xpayload: VariableInner = xv.borrow().payload;
+    let ypayload: VariableInner = yv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
-            return Equal(xpayload, ypayload);
+        cpp!([xpayload as "Variable", ypayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Equal(xpayload, ypayload);
+            } catch (std::exception& e) {
+                printf("Equal throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn not_equal(x: &Variable, y: &Variable) -> Variable {
-    let xpayload = x.payload;
-    let ypayload = y.payload;
+pub fn not_equal<T: Into<Variable>, U: Into<Variable>>(x: T, y: U) -> Function {
+    let xv = x.into();
+    let yv = y.into();
+    let xpayload: VariableInner = xv.borrow().payload;
+    let ypayload: VariableInner = yv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
-            return NotEqual(xpayload, ypayload);
+        cpp!([xpayload as "Variable", ypayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return NotEqual(xpayload, ypayload);
+            } catch (std::exception& e) {
+                printf("NotEqual throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn less(x: &Variable, y: &Variable) -> Variable {
-    let xpayload = x.payload;
-    let ypayload = y.payload;
+pub fn less<T: Into<Variable>, U: Into<Variable>>(x: T, y: U) -> Function {
+    let xv = x.into();
+    let yv = y.into();
+    let xpayload: VariableInner = xv.borrow().payload;
+    let ypayload: VariableInner = yv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
-            return Less(xpayload, ypayload);
+        cpp!([xpayload as "Variable", ypayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Less(xpayload, ypayload);
+            } catch (std::exception& e) {
+                printf("Less throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn less_equal(x: &Variable, y: &Variable) -> Variable {
-    let xpayload = x.payload;
-    let ypayload = y.payload;
+pub fn less_equal<T: Into<Variable>, U: Into<Variable>>(x: T, y: U) -> Function {
+    let xv = x.into();
+    let yv = y.into();
+    let xpayload: VariableInner = xv.borrow().payload;
+    let ypayload: VariableInner = yv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
-            return LessEqual(xpayload, ypayload);
+        cpp!([xpayload as "Variable", ypayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return LessEqual(xpayload, ypayload);
+            } catch (std::exception& e) {
+                printf("LessEqual throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn greater(x: &Variable, y: &Variable) -> Variable {
-    let xpayload = x.payload;
-    let ypayload = y.payload;
+pub fn greater<T: Into<Variable>, U: Into<Variable>>(x: T, y: U) -> Function {
+    let xv = x.into();
+    let yv = y.into();
+    let xpayload: VariableInner = xv.borrow().payload;
+    let ypayload: VariableInner = yv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
-            return Greater(xpayload, ypayload);
+        cpp!([xpayload as "Variable", ypayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Greater(xpayload, ypayload);
+            } catch (std::exception& e) {
+                printf("Greater throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn greater_equal(x: &Variable, y: &Variable) -> Variable {
-    let xpayload = x.payload;
-    let ypayload = y.payload;
+pub fn greater_equal<T: Into<Variable>, U: Into<Variable>>(x: T, y: U) -> Function {
+    let xv = x.into();
+    let yv = y.into();
+    let xpayload: VariableInner = xv.borrow().payload;
+    let ypayload: VariableInner = yv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
-            return GreaterEqual(xpayload, ypayload);
+        cpp!([xpayload as "Variable", ypayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return GreaterEqual(xpayload, ypayload);
+            } catch (std::exception& e) {
+                printf("GreaterEqual throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn times(x: &Variable, y: &Variable) -> Variable {
-    let xpayload = x.payload;
-    let ypayload = y.payload;
+pub fn times<T: Into<Variable>, U: Into<Variable>>(x: T, y: U) -> Function {
+    let xv = x.into();
+    let yv = y.into();
+    let xpayload: VariableInner = xv.borrow().payload;
+    let ypayload: VariableInner = yv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
-            return Times(xpayload, ypayload);
+        cpp!([xpayload as "Variable", ypayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Times(xpayload, ypayload);
+            } catch (std::exception& e) {
+                printf("Times throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn transpose_times(x: &Variable, y: &Variable) -> Variable {
-    let xpayload = x.payload;
-    let ypayload = y.payload;
+pub fn transpose_times<T: Into<Variable>, U: Into<Variable>>(x: T, y: U) -> Function {
+    let xv = x.into();
+    let yv = y.into();
+    let xpayload: VariableInner = xv.borrow().payload;
+    let ypayload: VariableInner = yv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
-            return TransposeTimes(xpayload, ypayload);
+        cpp!([xpayload as "Variable", ypayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return TransposeTimes(xpayload, ypayload);
+            } catch (std::exception& e) {
+                printf("TransposeTimes throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn cosine_distance(x: &Variable, y: &Variable) -> Variable {
-    let xpayload = x.payload;
-    let ypayload = y.payload;
+pub fn cosine_distance<T: Into<Variable>, U: Into<Variable>>(x: T, y: U) -> Function {
+    let xv = x.into();
+    let yv = y.into();
+    let xpayload: VariableInner = xv.borrow().payload;
+    let ypayload: VariableInner = yv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
-            return CosineDistance(xpayload, ypayload);
+        cpp!([xpayload as "Variable", ypayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return CosineDistance(xpayload, ypayload);
+            } catch (std::exception& e) {
+                printf("CosineDistance throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn binary_cross_entropy(x: &Variable, y: &Variable) -> Variable {
-    let xpayload = x.payload;
-    let ypayload = y.payload;
+pub fn binary_cross_entropy<T: Into<Variable>, U: Into<Variable>>(x: T, y: U) -> Function {
+    let xv = x.into();
+    let yv = y.into();
+    let xpayload: VariableInner = xv.borrow().payload;
+    let ypayload: VariableInner = yv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
-            return BinaryCrossEntropy(xpayload, ypayload);
+        cpp!([xpayload as "Variable", ypayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return BinaryCrossEntropy(xpayload, ypayload);
+            } catch (std::exception& e) {
+                printf("BinaryCrossEntropy throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn squared_error(x: &Variable, y: &Variable) -> Variable {
-    let xpayload = x.payload;
-    let ypayload = y.payload;
+pub fn squared_error<T: Into<Variable>, U: Into<Variable>>(x: T, y: U) -> Function {
+    let xv = x.into();
+    let yv = y.into();
+    let xpayload: VariableInner = xv.borrow().payload;
+    let ypayload: VariableInner = yv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
-            return SquaredError(xpayload, ypayload);
+        cpp!([xpayload as "Variable", ypayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return SquaredError(xpayload, ypayload);
+            } catch (std::exception& e) {
+                printf("SquaredError throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn cross_entropy_with_softmax(x: &Variable, y: &Variable) -> Variable {
-    let xpayload = x.payload;
-    let ypayload = y.payload;
+pub fn cross_entropy_with_softmax<T: Into<Variable>, U: Into<Variable>>(x: T, y: U) -> Function {
+    let xv = x.into();
+    let yv = y.into();
+    let xpayload: VariableInner = xv.borrow().payload;
+    let ypayload: VariableInner = yv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
-            return CrossEntropyWithSoftmax(xpayload, ypayload);
+        cpp!([xpayload as "Variable", ypayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return CrossEntropyWithSoftmax(xpayload, ypayload);
+            } catch (std::exception& e) {
+                printf("CrossEntropyWithSoftmax throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn classification_error(x: &Variable, y: &Variable) -> Variable {
-    let xpayload = x.payload;
-    let ypayload = y.payload;
+pub fn classification_error<T: Into<Variable>, U: Into<Variable>>(x: T, y: U) -> Function {
+    let xv = x.into();
+    let yv = y.into();
+    let xpayload: VariableInner = xv.borrow().payload;
+    let ypayload: VariableInner = yv.borrow().payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", ypayload as "Variable"] -> VariableInner as "Variable" {
-            return ClassificationError(xpayload, ypayload);
+        cpp!([xpayload as "Variable", ypayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return ClassificationError(xpayload, ypayload);
+            } catch (std::exception& e) {
+                printf("ClassificationError throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable { payload }
+    Function {payload}
 }
+
 
 /* binary ops end here */
 
 /* unary axis ops start here */
-pub fn softmax_with_axis(x: &Variable, axis: &Axis) -> Variable {
-    let xpayload = x.payload;
+
+
+pub fn softmax_with_axis<T: Into<Variable>>(x: T, axis: &Axis) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let apayload = axis.payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", apayload as "Axis"] -> VariableInner as "Variable" {
-            return Softmax(xpayload, apayload);
+        cpp!([xpayload as "Variable", apayload as "Axis"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Softmax(xpayload, apayload);
+            } catch (std::exception& e) {
+                printf("Softmax throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn reduce_sum(x: &Variable, axis: &Axis) -> Variable {
-    let xpayload = x.payload;
+pub fn reduce_sum<T: Into<Variable>>(x: T, axis: &Axis) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let apayload = axis.payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", apayload as "Axis"] -> VariableInner as "Variable" {
-            return ReduceSum(xpayload, apayload);
+        cpp!([xpayload as "Variable", apayload as "Axis"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return ReduceSum(xpayload, apayload);
+            } catch (std::exception& e) {
+                printf("ReduceSum throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn reduce_log_sum(x: &Variable, axis: &Axis) -> Variable {
-    let xpayload = x.payload;
+pub fn reduce_log_sum<T: Into<Variable>>(x: T, axis: &Axis) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let apayload = axis.payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", apayload as "Axis"] -> VariableInner as "Variable" {
-            return ReduceLogSum(xpayload, apayload);
+        cpp!([xpayload as "Variable", apayload as "Axis"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return ReduceLogSum(xpayload, apayload);
+            } catch (std::exception& e) {
+                printf("ReduceLogSum throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn reduce_mean(x: &Variable, axis: &Axis) -> Variable {
-    let xpayload = x.payload;
+pub fn reduce_mean<T: Into<Variable>>(x: T, axis: &Axis) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let apayload = axis.payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", apayload as "Axis"] -> VariableInner as "Variable" {
-            return ReduceMean(xpayload, apayload);
+        cpp!([xpayload as "Variable", apayload as "Axis"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return ReduceMean(xpayload, apayload);
+            } catch (std::exception& e) {
+                printf("ReduceMean throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn reduce_max(x: &Variable, axis: &Axis) -> Variable {
-    let xpayload = x.payload;
+pub fn reduce_max<T: Into<Variable>>(x: T, axis: &Axis) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let apayload = axis.payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", apayload as "Axis"] -> VariableInner as "Variable" {
-            return ReduceMax(xpayload, apayload);
+        cpp!([xpayload as "Variable", apayload as "Axis"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return ReduceMax(xpayload, apayload);
+            } catch (std::exception& e) {
+                printf("ReduceMax throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn reduce_min(x: &Variable, axis: &Axis) -> Variable {
-    let xpayload = x.payload;
+pub fn reduce_min<T: Into<Variable>>(x: T, axis: &Axis) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let apayload = axis.payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", apayload as "Axis"] -> VariableInner as "Variable" {
-            return ReduceMin(xpayload, apayload);
+        cpp!([xpayload as "Variable", apayload as "Axis"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return ReduceMin(xpayload, apayload);
+            } catch (std::exception& e) {
+                printf("ReduceMin throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn reduce_prod(x: &Variable, axis: &Axis) -> Variable {
-    let xpayload = x.payload;
+pub fn reduce_prod<T: Into<Variable>>(x: T, axis: &Axis) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let apayload = axis.payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", apayload as "Axis"] -> VariableInner as "Variable" {
-            return ReduceProd(xpayload, apayload);
+        cpp!([xpayload as "Variable", apayload as "Axis"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return ReduceProd(xpayload, apayload);
+            } catch (std::exception& e) {
+                printf("ReduceProd throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn argmax(x: &Variable, axis: &Axis) -> Variable {
-    let xpayload = x.payload;
+pub fn argmax<T: Into<Variable>>(x: T, axis: &Axis) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let apayload = axis.payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", apayload as "Axis"] -> VariableInner as "Variable" {
-            return Argmax(xpayload, apayload);
+        cpp!([xpayload as "Variable", apayload as "Axis"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Argmax(xpayload, apayload);
+            } catch (std::exception& e) {
+                printf("Argmax throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn argmin(x: &Variable, axis: &Axis) -> Variable {
-    let xpayload = x.payload;
+pub fn argmin<T: Into<Variable>>(x: T, axis: &Axis) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.borrow().payload;
     let apayload = axis.payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", apayload as "Axis"] -> VariableInner as "Variable" {
-            return Argmin(xpayload, apayload);
+        cpp!([xpayload as "Variable", apayload as "Axis"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Argmin(xpayload, apayload);
+            } catch (std::exception& e) {
+                printf("Argmin throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
+
+
+
 /* unary axis ops end here */
 
 /* random ops */
-pub fn normal_random_like(x: &Variable, mean: f64, scale: f64) -> Variable {
-    let xpayload = x.payload;
+pub fn normal_random_like<T: Into<Variable>>(x: T, mean: f64, scale: f64) -> Function {
+    let xv = x.into();
+    let xpayload = xv.payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", mean as "double", scale as "double"] -> VariableInner as "Variable" {
+        cpp!([xpayload as "Variable", mean as "double", scale as "double"] -> FunctionInner as "FunctionPtr" {
             return NormalRandomLike(xpayload, mean, scale);
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn bernoulli_random_like(x: &Variable, mean: f64) -> Variable {
-    let xpayload = x.payload;
+pub fn bernoulli_random_like<T: Into<Variable>>(x: T, mean: f64) -> Function {
+    let xv = x.into();
+    let xpayload = xv.payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", mean as "double"] -> VariableInner as "Variable" {
+        cpp!([xpayload as "Variable", mean as "double"] -> FunctionInner as "FunctionPtr" {
             return BernoulliRandomLike(xpayload, mean);
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn uniform_random_like(x: &Variable, low: f64, high: f64) -> Variable {
-    let xpayload = x.payload;
+pub fn uniform_random_like<T: Into<Variable>>(x: T, low: f64, high: f64) -> Function {
+    let xv = x.into();
+    let xpayload = xv.payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", low as "double", high as "double"] -> VariableInner as "Variable" {
+        cpp!([xpayload as "Variable", low as "double", high as "double"] -> FunctionInner as "FunctionPtr" {
             return UniformRandomLike(xpayload, low, high);
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn gumbel_random_like(x: &Variable, loc: f64, scale: f64) -> Variable {
-    let xpayload = x.payload;
+pub fn gumbel_random_like<T: Into<Variable>>(x: T, loc: f64, scale: f64) -> Function {
+    let xv = x.into();
+    let xpayload = xv.payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", loc as "double", scale as "double"] -> VariableInner as "Variable" {
+        cpp!([xpayload as "Variable", loc as "double", scale as "double"] -> FunctionInner as "FunctionPtr" {
             return GumbelRandomLike(xpayload, loc, scale);
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
 /* random ops end */
 
 /* convolution */
-pub fn convolution(convmap: &Variable, y: &Variable, strides: &Shape) -> Variable {
-    let convmappayload = convmap.payload;
-    let ypayload = y.payload;
+pub fn convolution<T: Into<Variable>, U: Into<Variable>>(convmap: T, y: U, strides: &Shape) -> Function {
+    let convmapv = convmap.into();
+    let convmappayload = convmapv.payload;
+    let yv = y.into();
+    let ypayload = yv.payload;
     let spayload = strides.payload;
     let payload = unsafe {
-        cpp!([convmappayload as "Variable", ypayload as "Variable", spayload as "NDShape"] -> VariableInner as "Variable" {
+        cpp!([convmappayload as "Variable", ypayload as "Variable", spayload as "NDShape"] -> FunctionInner as "FunctionPtr" {
             try {
                 return Convolution(convmappayload, ypayload, spayload);
             } catch (std::exception& e) {
@@ -795,39 +1193,44 @@ pub fn convolution(convmap: &Variable, y: &Variable, strides: &Shape) -> Variabl
             }
         })
     };
-    Variable {payload}
+    Function {payload}
 }
 
-pub fn max_pooling(x: &Variable, window_shape: &Shape, strides: &Shape) -> Variable {
-    let xpayload = x.payload;
+pub fn max_pooling<T: Into<Variable>>(x: T, window_shape: &Shape, strides: &Shape) -> Function {
+    let xv = x.into();
+    let xpayload = xv.payload;
     let spayload = window_shape.payload;
     let stpayload = strides.payload;
-    Variable { payload: unsafe {
-        cpp!([xpayload as "Variable", spayload as "NDShape", stpayload as "NDShape"] -> VariableInner as "Variable" {
+    Function { payload: unsafe {
+        cpp!([xpayload as "Variable", spayload as "NDShape", stpayload as "NDShape"] -> FunctionInner as "FunctionPtr" {
             return Pooling(xpayload, PoolingType::Max, spayload, stpayload);
         })
     }}
 }
 
-pub fn avg_pooling(x: &Variable, window_shape: &Shape, strides: &Shape) -> Variable {
-    let xpayload = x.payload;
+pub fn avg_pooling<T: Into<Variable>>(x: T, window_shape: &Shape, strides: &Shape) -> Function {
+    let xv = x.into();
+    let xpayload = xv.payload;
     let spayload = window_shape.payload;
     let stpayload = strides.payload;
-    Variable { payload: unsafe {
-        cpp!([xpayload as "Variable", spayload as "NDShape", stpayload as "NDShape"] -> VariableInner as "Variable" {
+    Function { payload: unsafe {
+        cpp!([xpayload as "Variable", spayload as "NDShape", stpayload as "NDShape"] -> FunctionInner as "FunctionPtr" {
                 return Pooling(xpayload, PoolingType::Average, spayload, stpayload);
             })
     }}
 }
 
-pub fn clip(x: &Variable, min: &Variable, max: &Variable) -> Variable {
-    let xpayload = x.payload;
-    let minpayload = min.payload;
-    let maxpayload = max.payload;
+pub fn clip<T: Into<Variable>, U: Into<Variable>, V: Into<Variable>>(x: T, min: U, max: V) -> Function {
+    let xv = x.into();
+    let xpayload = xv.payload;
+    let minv = min.into();
+    let minpayload = minv.payload;
+    let maxv = max.into();
+    let maxpayload = maxv.payload;
     let payload = unsafe {
-        cpp!([xpayload as "Variable", minpayload as "Variable", maxpayload as "Variable"] -> VariableInner as "Variable" {
+        cpp!([xpayload as "Variable", minpayload as "Variable", maxpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
             return Clip(xpayload, minpayload, maxpayload);
         })
     };
-    Variable {payload}
+    Function {payload}
 }

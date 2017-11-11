@@ -1,3 +1,5 @@
+use std::borrow::Borrow;
+
 cpp! {{
   #include <CNTKLibrary.h>
   #include <cstdio>
@@ -22,12 +24,13 @@ impl Shape {
         }}
     }
 
-    pub fn from_slice(data: &[usize]) -> Shape {
-        let data_ptr = data.as_ptr();
-        let data_size = data.len();
+    pub fn new<K: Borrow<Vec<usize>>>(data: K) -> Shape {
+        let datab = data.borrow();
+        let datab_ptr = datab.as_ptr();
+        let datab_size = datab.len();
         Shape {payload: unsafe {
-            cpp!([data_ptr as "size_t*", data_size as "size_t"] -> ShapeInner as "NDShape" {
-                vector<size_t> shape_vec(data_ptr, data_ptr + data_size);
+            cpp!([datab_ptr as "size_t*", datab_size as "size_t"] -> ShapeInner as "NDShape" {
+                vector<size_t> shape_vec(datab_ptr, datab_ptr + datab_size);
                 return NDShape(shape_vec);
             })
         }}

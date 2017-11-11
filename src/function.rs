@@ -27,8 +27,9 @@ pub struct BackPropState {
 }
 
 impl Function {
-    pub fn from_variable(var: &Variable) -> Function {
-        let payload = var.payload;
+    pub fn from_variable<T: Into<Variable>>(var: T) -> Function {
+        let varv = var.into();
+        let payload = varv.payload;
         Function { payload: unsafe {
             cpp!([payload as "Variable"] -> FunctionInner as "FunctionPtr" {
                 return payload;
@@ -76,7 +77,12 @@ impl Function {
         let dpayload = device.payload;
         unsafe {
             cpp!([payload as "FunctionPtr", impayload as "unordered_map<Variable, ValuePtr>*", mut ompayload as "unordered_map<Variable, ValuePtr>*", dpayload as "DeviceDescriptor"] {
-                payload->Evaluate(*impayload, *ompayload, dpayload);
+                try {
+                    payload->Evaluate(*impayload, *ompayload, dpayload);
+                } catch (std::exception& e) {
+                    printf("Evaluate throw an exception %s\n", e.what());
+                    throw e;
+                }
             })
         };
     }
@@ -156,7 +162,9 @@ impl Function {
             let mut ptr = output.as_mut_ptr();
             cpp!([payload as "FunctionPtr", mut ptr as "Variable*"] {
                 auto outputs = payload->Inputs();
-                memcpy(ptr, outputs.data(), sizeof(Variable)*outputs.size());
+                for (size_t i = 0; i < outputs.size(); i++) {
+                    ::new (&ptr[i]) Variable(outputs[i]);
+                }
             })
         }
         output.into_iter().map(|x| Variable {payload: x}).collect::<Vec<Variable>>()
@@ -171,7 +179,9 @@ impl Function {
             let mut ptr = output.as_mut_ptr();
             cpp!([payload as "FunctionPtr", mut ptr as "Variable*"] {
                 auto outputs = payload->Outputs();
-                memcpy(ptr, outputs.data(), sizeof(Variable)*outputs.size());
+                for (size_t i = 0; i < outputs.size(); i++) {
+                    ::new (&ptr[i]) Variable(outputs[i]);
+                }
             })
         }
         output.into_iter().map(|x| Variable {payload: x}).collect::<Vec<Variable>>()
@@ -205,7 +215,9 @@ impl Function {
             let mut ptr = output.as_mut_ptr();
             cpp!([payload as "FunctionPtr", mut ptr as "Variable*"] {
                 auto outputs = payload->Parameters();
-                memcpy(ptr, outputs.data(), sizeof(Variable)*outputs.size());
+                for (size_t i = 0; i < outputs.size(); i++) {
+                    ::new (&ptr[i]) Variable(outputs[i]);
+                }
             })
         }
         output.into_iter().map(|x| Variable {payload: x}).collect::<Vec<Variable>>()

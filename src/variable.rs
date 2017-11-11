@@ -84,11 +84,6 @@ impl ParameterInitializer {
     }
 }
 
-/*#[repr(C)]
-#[derive(Debug)]
-pub(super) struct VariableInner{
-    payload: [u64; 5usize]
-}*/
 pub(super) type VariableInner = [u64; 5usize];
 
 #[derive(Debug)]
@@ -270,39 +265,9 @@ impl<T: Borrow<Function>> From<T> for Variable {
     }
 }
 
-/*impl<'a> From<&'a Variable> for Variable {
+impl<'a> From<&'a Variable> for Variable {
     fn from(f: &'a Variable) -> Variable {
         f.clone()
-    }
-}*/
-
-pub trait VariableOrRef {
-    fn borrow(&self) -> &Variable;
-}
-
-impl VariableOrRef for Variable {
-    fn borrow(&self) -> &Variable { self }
-}
-
-impl<'a> VariableOrRef for &'a Variable {
-    fn borrow(& self) -> & Variable { self }
-}
-
-pub trait IntoVariable<T: VariableOrRef> {
-    fn into(self) -> T;
-}
-
-impl IntoVariable<Variable> for Variable {
-    fn into(self) -> Variable { self }
-}
-
-impl<'a> IntoVariable<&'a Variable> for &'a Variable {
-    fn into(self) -> &'a Variable { self }
-}
-
-impl<T: Borrow<Function>> IntoVariable<Variable> for T {
-    fn into(self) -> Variable {
-        self.borrow().to_variable().unwrap()
     }
 }
 

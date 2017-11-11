@@ -31,9 +31,10 @@ impl ReplacementMap {
     }
 
     /// Adds mapping to ReplacementMap. If mapping for given Variable exists, it will be overwritten.
-    pub fn add(&mut self, variable: &Variable, replacement: &Variable) {
+    pub fn add<T: Into<Variable>>(&mut self, variable: &Variable, replacement: T) {
         let var_payload = variable.payload;
-        let repl_payload = replacement.payload;
+        let rv = replacement.into();
+        let repl_payload = rv.payload;
         let mut payload = self.payload;
 
         unsafe {
@@ -53,6 +54,23 @@ impl Drop for ReplacementMap {
             })
         };
     }
+}
+
+#[macro_export]
+macro_rules! replacementmap {
+    (@single $($x:tt)*) => (());
+    (@count $($rest:expr),*) => (<[()]>::len(&[$(replacementmap!(@single $rest)),*]));
+
+    ($($key:expr => $value:expr,)+) => { replacementmap!($($key => $value),+) };
+    ($($key:expr => $value:expr),*) => {
+        {
+            let mut _map = ReplacementMap::new();
+            $(
+                _map.add($key, $value);
+            )*
+            _map
+        }
+    };
 }
 
 #[cfg(test)]

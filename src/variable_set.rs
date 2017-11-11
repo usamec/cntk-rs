@@ -31,8 +31,9 @@ impl VariableSet {
     }
 
     /// Adds Variable to set
-    pub fn add(&mut self, variable: &Variable) {
-        let var_payload = variable.payload;
+    pub fn add<T: Into<Variable>>(&mut self, variable: T) {
+        let vv = variable.into();
+        let var_payload = vv.payload;
         let mut payload = self.payload;
 
         unsafe {
@@ -52,6 +53,23 @@ impl Drop for VariableSet {
             })
         };
     }
+}
+
+#[macro_export]
+macro_rules! variableset {
+    (@single $($x:tt)*) => (());
+    (@count $($rest:expr),*) => (<[()]>::len(&[$(variableset!(@single $rest)),*]));
+    
+    ($($key:expr,)+) => { variableset!($($key),+) };
+    ($($key:expr),*) => {
+        {
+            let mut _set = VariableSet::new();
+            $(
+                _set.add($key);
+            )*
+            _set
+        }
+    };
 }
 
 #[cfg(test)]
