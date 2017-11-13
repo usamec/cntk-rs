@@ -60,6 +60,20 @@ impl Value {
         Value { payload }
     }
 
+    pub fn one_hot_seq(shape: &Shape, seq: &[usize], device: DeviceDescriptor) -> Value {
+        let data_ptr = seq.as_ptr();
+        let data_size = seq.len();
+        let shape_payload = shape.payload;
+        let device_payload = device.payload;
+        let payload = unsafe {
+            cpp!([shape_payload as "NDShape", data_ptr as "size_t*", data_size as "size_t", device_payload as "DeviceDescriptor" ] -> ValueInner as "ValuePtr" {
+            vector<size_t> data(data_ptr, data_ptr + data_size);
+            return Value::Create<float>(shape_payload, { data }, device_payload);
+        })
+        };
+        Value { payload }
+    }
+
     pub fn to_vec(&self) -> Vec<f32> {
         let payload = self.payload;
         let total_size = unsafe {

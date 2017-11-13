@@ -72,6 +72,14 @@ impl Shape {
             })
         }}
     }
+
+    pub fn to_vec(&self) -> Vec<usize> {
+        let mut ret = Vec::new();
+        for i in 0..self.rank() {
+            ret.push(self.get(i));
+        }
+        ret
+    }
 }
 
 impl Drop for Shape {

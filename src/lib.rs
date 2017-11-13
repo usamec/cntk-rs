@@ -455,4 +455,32 @@ mod tests {
         let result = outdatamap.get(&conv).unwrap().to_vec();
         assert_eq!(result.len(), 12);
     }
+
+    #[test]
+    fn test_sparse() {
+        let var = Variable::input_variable(&Shape::new(vec!(5, 5)));
+        let var2 = Variable::sparse_input_variable(&Shape::new(vec!(5, 2)));
+
+        let output = times(&var, &var2);
+
+        let data: Vec<f32> = vec!(1.0, 0.0, 0.0, 0.0, 0.0,
+                                  0.0, 1.0, 0.0, 0.0, 0.0,
+                                  0.0, 0.0, 1.0, 0.0, 0.0,
+                                  0.0, 0.0, 0.0, 1.0, 0.0,
+                                  0.0, 0.0, 0.0, 0.0, 1.0);
+        let data2: Vec<f32> = vec!(11.0, 12.0, 13.0, 14.0, 15.0, 1., 2., 3., 4., 5.);
+        let val = Value::from_vec(&var.shape(), &data, DeviceDescriptor::cpu());
+        //let val2 = Value::batch(&var2.shape(), &data2, DeviceDescriptor::cpu());
+        //let val2 = Value::from_csc(&var2.shape(), &vec!(0, 2), &vec!(0, 2, 1, 3), &vec!(1., 2., 3., 4.), DeviceDescriptor::cpu());
+        let val2 = Value::one_hot_seq(&var2.shape(), &vec!(1, 3), DeviceDescriptor::cpu());
+
+        let datamap = datamap!{var => &val, var2 => &val2};
+        let mut outdatamap = outdatamap!{&output};
+
+        output.evaluate(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
+
+        let result = outdatamap.get(&output).unwrap().to_vec();
+
+        assert_eq!(result, vec!(0., 1., 0., 0., 0., 0., 0., 0., 1., 0.));
+    }
 }

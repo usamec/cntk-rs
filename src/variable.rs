@@ -2,6 +2,7 @@ use shape::{Shape, ShapeInner};
 use device::DeviceDescriptor;
 use function::Function;
 use std::borrow::Borrow;
+use std::ptr;
 
 cpp! {{
   #include <CNTKLibrary.h>
@@ -97,6 +98,15 @@ impl Variable {
         Variable { payload: unsafe {
             cpp!([spayload as "NDShape"] -> VariableInner as "Variable" {
                 return InputVariable(spayload, DataType::Float);
+            })
+        }}
+    }
+
+    pub fn sparse_input_variable(shape: &Shape) -> Variable {
+        let spayload = shape.payload;
+        Variable { payload: unsafe {
+            cpp!([spayload as "NDShape"] -> VariableInner as "Variable" {
+                return InputVariable(spayload, true, DataType::Float);
             })
         }}
     }
@@ -239,6 +249,27 @@ impl Variable {
         })
         };
         Variable {payload}
+    }
+
+    pub fn parameter_to_vec(&self) -> Vec<f32> {
+        assert!(self.is_parameter());
+        let payload = self.payload;
+        let total_size = unsafe {
+            cpp!([payload as "Parameter"] -> usize as "size_t" {
+                return payload.Value()->Shape().TotalSize();
+            })
+        };
+        let mut buffer: Vec<f32> = Vec::with_capacity(total_size);
+        unsafe { buffer.set_len(total_size); }
+        let data = unsafe {
+            cpp!([payload as "Parameter"] -> *const f32 as "const float*" {
+              return payload.Value()->DataBuffer<float>();
+            })
+        };
+        unsafe {
+            ptr::copy(data, buffer.as_mut_ptr(), total_size);
+        }
+        buffer
     }
 }
 

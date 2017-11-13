@@ -115,11 +115,16 @@ pub fn named_alias<T: Into<Variable>>(x: T, name: &str) -> Function {
     let name_len = name.len();
     Function { payload: unsafe {
         cpp!([xpayload as "Variable", name_ptr as "char*", name_len as "size_t"] -> FunctionInner as "FunctionPtr" {
+            try{
                 string name(name_ptr, name_ptr + name_len);
                 wstring wname;
                 wname.assign(name.begin(), name.end());
                 return Alias(xpayload, wname);
-            })
+            } catch (std::exception& e) {
+                printf("Alias throw an exception %s\n", e.what());
+                throw e;
+            }
+        })
     }}
 }
 
@@ -128,7 +133,12 @@ pub fn past_value<T: Into<Variable>>(x: T) -> Function {
     let xpayload = xv.payload;
     let payload = unsafe {
         cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
-            return PastValue(xpayload);
+            try {
+                return PastValue(xpayload);
+            } catch (std::exception& e) {
+                printf("PastValue throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
     Function {payload}
@@ -139,7 +149,12 @@ pub fn future_value<T: Into<Variable>>(x: T) -> Function {
     let xpayload = xv.payload;
     let payload = unsafe {
         cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
-            return FutureValue(xpayload);
+            try {
+                return FutureValue(xpayload);
+            } catch (std::exception& e) {
+                printf("FutureValue throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
     Function {payload}
@@ -150,7 +165,12 @@ pub fn first<T: Into<Variable>>(x: T) -> Function {
     let xpayload = xv.payload;
     let payload = unsafe {
         cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
-            return Sequence::First(xpayload);
+            try {
+                return Sequence::First(xpayload);
+            } catch (std::exception& e) {
+                printf("First throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
     Function {payload}
@@ -161,7 +181,12 @@ pub fn last<T: Into<Variable>>(x: T) -> Function {
     let xpayload = xv.payload;
     let payload = unsafe {
         cpp!([xpayload as "Variable"] -> FunctionInner as "FunctionPtr" {
-            return Sequence::Last(xpayload);
+            try {
+                return Sequence::Last(xpayload);
+            } catch (std::exception& e) {
+                printf("Last throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
     Function {payload}
