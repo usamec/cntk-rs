@@ -45,7 +45,7 @@ fn main() {
 
     let all_parameters = output.parameters();
 
-    let learner = Learner::sgd(&all_parameters.iter().collect::<Vec<&Variable>>(), &DoubleParameterSchedule::constant(0.01));
+    let learner = Learner::sgd(&all_parameters, &DoubleParameterSchedule::constant(0.01));
     let trainer = Trainer::new_with_evalatuion(&output, &loss, &error_count, &learner);
 
     let (trn_size, rows, cols) = (50_000, 28, 28);

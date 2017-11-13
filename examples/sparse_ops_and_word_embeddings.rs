@@ -67,7 +67,7 @@ fn main() {
     let loss = reduce_sum(nce_loss(&w2, &b, &embedded, &y, &noise_w, 5), &Axis::all());
 
     let all_parameters = loss.parameters();
-    let learner = Learner::sgd(&all_parameters.iter().collect::<Vec<&Variable>>(), &DoubleParameterSchedule::constant(0.1));
+    let learner = Learner::sgd(&all_parameters, &DoubleParameterSchedule::constant(0.1));
     let trainer = Trainer::new(&embedded, &loss, &learner);
     let mut rng = rand::thread_rng();
     let word_range = Range::new(0, translated_tokens.len());

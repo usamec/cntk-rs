@@ -1,4 +1,5 @@
 use variable::{Variable};
+use std::borrow::Borrow;
 
 cpp! {{
   #include <CNTKLibrary.h>
@@ -44,10 +45,10 @@ pub struct Learner {
 }
 
 impl Learner {
-    pub fn sgd(parameters: &[&Variable], learning_rate_schedule: &DoubleParameterSchedule) -> Learner {
+    pub fn sgd<T: Borrow<Variable>>(parameters: &[T], learning_rate_schedule: &DoubleParameterSchedule) -> Learner {
         check_parameters(parameters);
 
-        let data: Vec<Variable> = parameters.iter().map(|&x| x.clone()).collect();
+        let data: Vec<Variable> = parameters.iter().map(|x| x.borrow().clone()).collect();
         let data_ptr = data.as_ptr();
         let data_size = data.len();
         let schedule = learning_rate_schedule.payload;
@@ -58,10 +59,10 @@ impl Learner {
         }}
     }
 
-    pub fn momentum_sgd(parameters: &[&Variable], learning_rate_schedule: &DoubleParameterSchedule, momentum_schedule: &DoubleParameterSchedule) -> Learner {
+    pub fn momentum_sgd<T: Borrow<Variable>>(parameters: &[T], learning_rate_schedule: &DoubleParameterSchedule, momentum_schedule: &DoubleParameterSchedule) -> Learner {
         check_parameters(parameters);
 
-        let data: Vec<Variable> = parameters.iter().map(|&x| x.clone()).collect();
+        let data: Vec<Variable> = parameters.iter().map(|x| x.borrow().clone()).collect();
         let data_ptr = data.as_ptr();
         let data_size = data.len();
         let schedule = learning_rate_schedule.payload;
@@ -73,10 +74,10 @@ impl Learner {
         }}
     }
 
-    pub fn adam(parameters: &[&Variable], learning_rate_schedule: &DoubleParameterSchedule, momentum_schedule: &DoubleParameterSchedule) -> Learner {
+    pub fn adam<T: Borrow<Variable>>(parameters: &[T], learning_rate_schedule: &DoubleParameterSchedule, momentum_schedule: &DoubleParameterSchedule) -> Learner {
         check_parameters(parameters);
 
-        let data: Vec<Variable> = parameters.iter().map(|&x| x.clone()).collect();
+        let data: Vec<Variable> = parameters.iter().map(|x| x.borrow().clone()).collect();
         let data_ptr = data.as_ptr();
         let data_size = data.len();
         let schedule = learning_rate_schedule.payload;
@@ -100,8 +101,8 @@ impl Drop for Learner {
     }
 }
 
-fn check_parameters(parameters: &[&Variable]) {
+fn check_parameters<T: Borrow<Variable>>(parameters: &[T]) {
     for parameter in parameters {
-        assert!(parameter.is_parameter());
+        assert!(parameter.borrow().is_parameter());
     }
 }

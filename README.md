@@ -9,13 +9,26 @@ Expect a lot of breaking changes.
 
 Build scripts are not ready yet, might not work outside of 64bit linux.
 
-Also library is probably not an idiomatic Rust.
+## Goals
+
+* Ability to train all reasonable architectures
+* No memory leaks
+* Reasonable ease of use
+
+## Nongoals
+
+* Idiomatic Rust everywhere
+* Super good ergonomics
 
 ## Building and installing
 
 You need to have CNTK-2.2 installed and paths to includes and library files in
 relevant enviroment variables (cntk activate scripts does this well).
 You also need g++-4.8 installed (because CNTK uses it to compile things).
+
+## Example usage
+
+See [examples](https://github.com/usamec/cntk-rs/tree/master/examples) folder.
 
 ## Other limitations
 
