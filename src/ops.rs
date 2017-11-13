@@ -1135,7 +1135,12 @@ pub fn normal_random_like<T: Into<Variable>>(x: T, mean: f64, scale: f64) -> Fun
     let xpayload = xv.payload;
     let payload = unsafe {
         cpp!([xpayload as "Variable", mean as "double", scale as "double"] -> FunctionInner as "FunctionPtr" {
-            return NormalRandomLike(xpayload, mean, scale);
+            try {
+                return NormalRandomLike(xpayload, mean, scale);
+            } catch (std::exception& e) {
+                printf("NormalRandomLike op threw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
     Function {payload}
@@ -1146,7 +1151,12 @@ pub fn bernoulli_random_like<T: Into<Variable>>(x: T, mean: f64) -> Function {
     let xpayload = xv.payload;
     let payload = unsafe {
         cpp!([xpayload as "Variable", mean as "double"] -> FunctionInner as "FunctionPtr" {
-            return BernoulliRandomLike(xpayload, mean);
+            try {
+                return BernoulliRandomLike(xpayload, mean);
+            } catch (std::exception& e) {
+                printf("BernoulliRandomLike op threw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
     Function {payload}
@@ -1157,7 +1167,12 @@ pub fn uniform_random_like<T: Into<Variable>>(x: T, low: f64, high: f64) -> Func
     let xpayload = xv.payload;
     let payload = unsafe {
         cpp!([xpayload as "Variable", low as "double", high as "double"] -> FunctionInner as "FunctionPtr" {
-            return UniformRandomLike(xpayload, low, high);
+            try {
+                return UniformRandomLike(xpayload, low, high);
+            } catch (std::exception& e) {
+                printf("UniformRandomLike op threw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
     Function {payload}
@@ -1168,7 +1183,12 @@ pub fn gumbel_random_like<T: Into<Variable>>(x: T, loc: f64, scale: f64) -> Func
     let xpayload = xv.payload;
     let payload = unsafe {
         cpp!([xpayload as "Variable", loc as "double", scale as "double"] -> FunctionInner as "FunctionPtr" {
-            return GumbelRandomLike(xpayload, loc, scale);
+            try {
+                return GumbelRandomLike(xpayload, loc, scale);
+            } catch (std::exception& e) {
+                printf("GumbelRandomLike op threw an exception %s\n", e.what());
+                throw e;
+            }
         })
     };
     Function {payload}
@@ -1203,7 +1223,12 @@ pub fn max_pooling<T: Into<Variable>>(x: T, window_shape: &Shape, strides: &Shap
     let stpayload = strides.payload;
     Function { payload: unsafe {
         cpp!([xpayload as "Variable", spayload as "NDShape", stpayload as "NDShape"] -> FunctionInner as "FunctionPtr" {
-            return Pooling(xpayload, PoolingType::Max, spayload, stpayload);
+            try {
+                return Pooling(xpayload, PoolingType::Max, spayload, stpayload);
+            } catch (std::exception& e) {
+                printf("AvgPooling throw an exception %s\n", e.what());
+                throw e;
+            }
         })
     }}
 }
@@ -1215,8 +1240,13 @@ pub fn avg_pooling<T: Into<Variable>>(x: T, window_shape: &Shape, strides: &Shap
     let stpayload = strides.payload;
     Function { payload: unsafe {
         cpp!([xpayload as "Variable", spayload as "NDShape", stpayload as "NDShape"] -> FunctionInner as "FunctionPtr" {
+            try {
                 return Pooling(xpayload, PoolingType::Average, spayload, stpayload);
-            })
+            } catch (std::exception& e) {
+                printf("AvgPooling throw an exception %s\n", e.what());
+                throw e;
+            }
+        })
     }}
 }
 
@@ -1233,4 +1263,27 @@ pub fn clip<T: Into<Variable>, U: Into<Variable>, V: Into<Variable>>(x: T, min: 
         })
     };
     Function {payload}
+}
+
+pub fn nce_loss<T: Into<Variable>, U: Into<Variable>, V: Into<Variable>, W: Into<Variable>, X: Into<Variable>>(weights: T, biases: U, inputs: V, labels: W, noise_weights: X, num_samples: usize) -> Function {
+    let wv = weights.into();
+    let bv = biases.into();
+    let iv = inputs.into();
+    let lv = labels.into();
+    let nv = noise_weights.into();
+    let wvp = wv.payload;
+    let bvp = bv.payload;
+    let ivp = iv.payload;
+    let lvp = lv.payload;
+    let nvp = nv.payload;
+    Function { payload: unsafe {
+        cpp!([wvp as "Variable", bvp as "Variable", ivp as "Variable", lvp as "Variable", nvp as "Variable", num_samples as "size_t"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return NCELoss(wvp, bvp, ivp, lvp, Constant(nvp), num_samples);
+            } catch (std::exception& e) {
+                printf("NCELoss throw an exception %s\n", e.what());
+                throw e;
+            }
+        })
+    }}
 }

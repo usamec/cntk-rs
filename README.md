@@ -9,6 +9,8 @@ Expect a lot of breaking changes.
 
 Build scripts are not ready yet, might not work outside of 64bit linux.
 
+Also library is probably not an idiomatic Rust.
+
 ## Building and installing
 
 You need to have CNTK-2.2 installed and paths to includes and library files in
@@ -21,17 +23,22 @@ Only works with single precision (f32 in Rust, float in C++) types.
 Only works with dense representations of vectors/matrices/tensors.
 Only works with ASCII strings for variable names and filenames.
 
-## Roadmap
+## What works
 
-* Figure out how to pass data in and out. Currently `Value::batch` for input and `Value::to_vec` should be enough.
-* Variable creation. - Some basics are there
-* Gradients. - Possible to do backward pass
-* Training simple feed forward net. - Possible.
-* Save and load model. - Possible.
-* Training recurrent or seq2seq net. - Recurrences are possible.
-* Convnets. - Convolution and pooling are present
-* Code for most operations. (probably generated). - Almost all, except couple of helpers.
-* Write some meaningful examples. - Only in tests now.
+* Passing data in and out of computation.
+* Backpropagation.
+* Training fully connected feedforward, convolutional and recurrent network (have to test bidirectional though).
+* Saving and loading the model.
+* Code for most operations. - Almost all, except couple of helpers.
+
+## Planned in future
+
+* Constant variable.
+* Demo of seq2seq model training.
+* Finish all operations.
+* Add more examples and documentation. (like seq2seq with word embeddings).
 * Catch all relevant C++ exceptions
 * Better build scripts.
 * Figure out whether we want NDArrayView or go directly from Rust data to Value and back.
+* Interop with some NDArray library.
+

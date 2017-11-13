@@ -144,6 +144,23 @@ impl Variable {
         }}
     }
 
+    pub fn constant_scalar(value: f32) -> Variable {
+        Variable { payload: unsafe {
+            cpp!([value as "float"] -> VariableInner as "Variable" {
+                return Constant::Scalar(DataType::Float, value);
+            })
+        }}
+    }
+
+    pub fn constant_repeat(shape: &Shape, value: f32) -> Variable {
+        let spayload = shape.payload;
+        Variable { payload: unsafe {
+            cpp!([spayload as "NDShape", value as "float"] -> VariableInner as "Variable" {
+                return Constant(spayload, DataType::Float, value);
+            })
+        }}
+    }
+
     pub fn shape(&self) -> Shape {
         let payload = self.payload;
         Shape { payload: unsafe {
