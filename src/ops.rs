@@ -160,6 +160,42 @@ pub fn future_value<T: Into<Variable>>(x: T) -> Function {
     Function {payload}
 }
 
+pub fn past_value_with_init<T: Into<Variable>, U: Into<Variable>>(x: T, initial: U) -> Function {
+    let xv = x.into();
+    let iv = initial.into();
+    let xpayload = xv.payload;
+    let ipayload = iv.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable", ipayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return PastValue(xpayload, ipayload);
+            } catch (std::exception& e) {
+                printf("PastValueWithInit throw an exception %s\n", e.what());
+                throw e;
+            }
+        })
+    };
+    Function {payload}
+}
+
+pub fn future_value_with_init<T: Into<Variable>, U: Into<Variable>>(x: T, initial: U) -> Function {
+    let xv = x.into();
+    let iv = initial.into();
+    let xpayload = xv.payload;
+    let ipayload = iv.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable", ipayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return FutureValue(xpayload, ipayload);
+            } catch (std::exception& e) {
+                printf("FutureValueWithInit throw an exception %s\n", e.what());
+                throw e;
+            }
+        })
+    };
+    Function {payload}
+}
+
 pub fn first<T: Into<Variable>>(x: T) -> Function {
     let xv = x.into();
     let xpayload = xv.payload;
@@ -647,7 +683,6 @@ pub fn softplus<T: Into<Variable>>(x: T) -> Function {
 /* unary ops end here */
 
 /* binary ops begin here */
-
 
 pub fn plus<T: Into<Variable>, U: Into<Variable>>(x: T, y: U) -> Function {
     let xv = x.into();
@@ -1311,4 +1346,22 @@ pub fn nce_loss<T: Into<Variable>, U: Into<Variable>, V: Into<Variable>, W: Into
             }
         })
     }}
+}
+
+pub fn broadcast_as<T: Into<Variable>, U: Into<Variable>>(x: T, y: U) -> Function {
+    let xv = x.into();
+    let yv = y.into();
+    let xpayload: VariableInner = xv.borrow().payload;
+    let ypayload: VariableInner = yv.borrow().payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable", ypayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Sequence::BroadcastAs(xpayload, ypayload);
+            } catch (std::exception& e) {
+                printf("BroadcastAs throw an exception %s\n", e.what());
+                throw e;
+            }
+        })
+    };
+    Function {payload}
 }

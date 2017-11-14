@@ -1,6 +1,7 @@
 use shape::{Shape, ShapeInner};
 use device::DeviceDescriptor;
 use std::ptr;
+use std::borrow::Borrow;
 
 cpp! {{
   #include <CNTKLibrary.h>
@@ -70,6 +71,46 @@ impl Value {
             vector<size_t> data(data_ptr, data_ptr + data_size);
             return Value::Create<float>(shape_payload, { data }, device_payload);
         })
+        };
+        Value { payload }
+    }
+
+    pub fn batch_of_sequences<T: Borrow<[f32]>>(shape: &Shape, seqs: &[T], device: DeviceDescriptor) -> Value {
+        let sizes = seqs.iter().map(|x| x.borrow().len()).collect::<Vec<usize>>();
+        let sizes_ptr = sizes.as_ptr();
+        let seqs_ptr = seqs.iter().map(|x| x.borrow().as_ptr()).collect::<Vec<_>>();
+        let data_ptr = seqs_ptr.as_ptr();
+        let n_batches = seqs.len();
+        let shape_payload = shape.payload;
+        let device_payload = device.payload;
+        let payload = unsafe {
+            cpp!([shape_payload as "NDShape", sizes_ptr as "size_t*", n_batches as "size_t", data_ptr as "float**", device_payload as "DeviceDescriptor" ] -> ValueInner as "ValuePtr" {
+                vector<vector<float>> data;
+                for (size_t i = 0; i < n_batches; i++) {
+                    data.push_back(vector<float>(data_ptr[i], data_ptr[i] + sizes_ptr[i]));
+                }
+                return Value::CreateBatchOfSequences(shape_payload, data, device_payload, true);
+            })
+        };
+        Value { payload }
+    }
+
+    pub fn batch_of_one_hot_sequences<T: Borrow<[usize]>>(shape: &Shape, seqs: &[T], device: DeviceDescriptor) -> Value {
+        let sizes = seqs.iter().map(|x| x.borrow().len()).collect::<Vec<usize>>();
+        let sizes_ptr = sizes.as_ptr();
+        let seqs_ptr = seqs.iter().map(|x| x.borrow().as_ptr()).collect::<Vec<_>>();
+        let data_ptr = seqs_ptr.as_ptr();
+        let n_batches = seqs.len();
+        let shape_payload = shape.payload;
+        let device_payload = device.payload;
+        let payload = unsafe {
+            cpp!([shape_payload as "NDShape", sizes_ptr as "size_t*", n_batches as "size_t", data_ptr as "size_t**", device_payload as "DeviceDescriptor" ] -> ValueInner as "ValuePtr" {
+                vector<vector<size_t>> data;
+                for (size_t i = 0; i < n_batches; i++) {
+                    data.push_back(vector<size_t>(data_ptr[i], data_ptr[i] + sizes_ptr[i]));
+                }
+                return Value::Create<float>(shape_payload, data, device_payload, true);
+            })
         };
         Value { payload }
     }

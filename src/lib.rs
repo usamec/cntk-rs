@@ -468,10 +468,7 @@ mod tests {
                                   0.0, 0.0, 1.0, 0.0, 0.0,
                                   0.0, 0.0, 0.0, 1.0, 0.0,
                                   0.0, 0.0, 0.0, 0.0, 1.0);
-        let data2: Vec<f32> = vec!(11.0, 12.0, 13.0, 14.0, 15.0, 1., 2., 3., 4., 5.);
         let val = Value::from_vec(&var.shape(), &data, DeviceDescriptor::cpu());
-        //let val2 = Value::batch(&var2.shape(), &data2, DeviceDescriptor::cpu());
-        //let val2 = Value::from_csc(&var2.shape(), &vec!(0, 2), &vec!(0, 2, 1, 3), &vec!(1., 2., 3., 4.), DeviceDescriptor::cpu());
         let val2 = Value::one_hot_seq(&var2.shape(), &vec!(1, 3), DeviceDescriptor::cpu());
 
         let datamap = datamap!{var => &val, var2 => &val2};
@@ -482,5 +479,24 @@ mod tests {
         let result = outdatamap.get(&output).unwrap().to_vec();
 
         assert_eq!(result, vec!(0., 1., 0., 0., 0., 0., 0., 0., 1., 0.));
+    }
+
+    #[test]
+    fn test_sequence_batch() {
+        let var = Variable::sparse_input_variable(&Shape::new(vec!(10)));
+        let var2 = Variable::parameter(&Shape::new(&vec!(2, 10)), &ParameterInitializer::constant(2.), DeviceDescriptor::cpu());
+
+        let output = times(&var2, &var);
+
+        let val = Value::batch_of_one_hot_sequences(&var.shape(), &vec!(vec!(1, 3), vec!(2, 4, 0)), DeviceDescriptor::cpu());
+
+        let datamap = datamap!{var => &val};
+        let mut outdatamap = outdatamap!{&output};
+
+        output.evaluate(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
+
+        let result = outdatamap.get(&output).unwrap().to_vec();
+
+        assert_eq!(result, vec!(2., 2., 2., 2., 0., 0., 2., 2., 2., 2., 2., 2.));
     }
 }

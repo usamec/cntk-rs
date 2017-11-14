@@ -1,3 +1,4 @@
+use axis::Axis;
 use shape::{Shape, ShapeInner};
 use device::DeviceDescriptor;
 use function::Function;
@@ -93,6 +94,23 @@ pub struct Variable {
 }
 
 impl Variable {
+    pub fn create<A: Borrow<Axis>>(shape: &Shape, is_sparse: bool, needs_gradient: bool, name: &str, dynamic_axes: &[A]) -> Variable {
+        let spayload = shape.payload;
+        let name_ptr = name.as_ptr();
+        let name_len = name.len();
+        let axis_payloads = dynamic_axes.iter().map(|x| x.borrow().payload).collect::<Vec<_>>();
+        let axis_ptr = axis_payloads.as_ptr();
+        let axis_len = axis_payloads.len();
+        Variable { payload: unsafe {
+            cpp!([spayload as "NDShape", name_ptr as "char*", name_len as "size_t", is_sparse as "bool", needs_gradient as "bool", axis_ptr as "Axis*", axis_len as "size_t"] -> VariableInner as "Variable" {
+                string name(name_ptr, name_ptr + name_len);
+                wstring wname;
+                wname.assign(name.begin(), name.end());
+                return InputVariable(spayload, is_sparse, DataType::Float, needs_gradient, wname, vector<Axis>(axis_ptr, axis_ptr + axis_len));
+            })
+        }}
+    }
+
     pub fn input_variable(shape: &Shape) -> Variable {
         let spayload = shape.payload;
         Variable { payload: unsafe {

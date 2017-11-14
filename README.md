@@ -19,6 +19,7 @@ Build scripts are not ready yet, might not work outside of 64bit linux.
 
 * Idiomatic Rust everywhere
 * Super good ergonomics
+* Avoiding all unnecessary copies
 
 ## Building and installing
 
@@ -46,7 +47,6 @@ Only works with ASCII strings for variable names and filenames.
 
 ## Planned in future
 
-* Constant variable.
 * Demo of seq2seq model training.
 * Finish all operations.
 * Add more examples and documentation. (like seq2seq with word embeddings).
@@ -54,4 +54,5 @@ Only works with ASCII strings for variable names and filenames.
 * Better build scripts.
 * Figure out whether we want NDArrayView or go directly from Rust data to Value and back.
 * Interop with some NDArray library.
+* Builder pattern where appropriate (Variable?).
 

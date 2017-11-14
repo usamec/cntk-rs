@@ -20,3 +20,4 @@ Download into `data` directory: http://cs.stanford.edu/people/karpathy/char-rnn/
 ### Running
 
 `cargo run --example sparse_ops_and_word_embeddings`
+`cargo run --example seq2seq`
