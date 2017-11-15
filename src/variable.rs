@@ -189,6 +189,18 @@ impl Variable {
         }}
     }
 
+    pub fn constant_from_slice(shape: &Shape, value: &[f32], device: DeviceDescriptor) -> Variable {
+        let spayload = shape.payload;
+        let value_ptr = value.as_ptr();
+        let value_len = value.len();
+        let dpayload = device.payload;
+        Variable { payload: unsafe {
+            cpp!([spayload as "NDShape", value_ptr as "float*", value_len as "size_t", dpayload as "DeviceDescriptor"] -> VariableInner as "Variable" {
+                return Constant(MakeSharedObject<NDArrayView>(spayload, value_ptr, value_len, dpayload, true)->DeepClone());
+            })
+        }}
+    }
+
     pub fn shape(&self) -> Shape {
         let payload = self.payload;
         Shape { payload: unsafe {

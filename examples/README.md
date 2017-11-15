@@ -19,5 +19,8 @@ Download into `data` directory: http://cs.stanford.edu/people/karpathy/char-rnn/
 
 ### Running
 
+Calculating word embeddings.
 `cargo run --example sparse_ops_and_word_embeddings`
+
+Simple sequence autoencoder with GRU units.
 `cargo run --example seq2seq`

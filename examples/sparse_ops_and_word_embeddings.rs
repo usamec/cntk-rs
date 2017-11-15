@@ -112,6 +112,5 @@ fn main() {
         (dist(princeembed, embed), word)
     }).collect::<Vec<(f32, &String)>>();
     word_dist.sort_by(|a, b| a.partial_cmp(b).unwrap());
-    //word_dist.sort();
     println!("{:?} {:?}", &word_dist[0..10], &word_dist[word_dist.len()-10..]);
 }
