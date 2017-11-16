@@ -3,6 +3,8 @@ use variable_set::VariableSet;
 use data_map::DataMap;
 use replacement_map::ReplacementMap;
 use device::DeviceDescriptor;
+use std::ptr;
+use std::ffi::CStr;
 
 cpp! {{
   #include <CNTKLibrary.h>
@@ -76,14 +78,20 @@ impl Function {
         let mut ompayload = output_data_map.payload;
         let dpayload = device.payload;
         unsafe {
-            cpp!([payload as "FunctionPtr", impayload as "unordered_map<Variable, ValuePtr>*", mut ompayload as "unordered_map<Variable, ValuePtr>*", dpayload as "DeviceDescriptor"] {
+            let mut error_p: *mut i8 = ptr::null_mut();
+            cpp!([payload as "FunctionPtr", impayload as "unordered_map<Variable, ValuePtr>*", mut ompayload as "unordered_map<Variable, ValuePtr>*", dpayload as "DeviceDescriptor", mut error_p as "char*"] {
                 try {
                     payload->Evaluate(*impayload, *ompayload, dpayload);
                 } catch (std::exception& e) {
-                    printf("Evaluate throw an exception %s\n", e.what());
-                    throw e;
+                    auto what = e.what();
+                    error_p = new char[strlen(what)+1];
+                    strcpy(error_p, what);
                 }
-            })
+            });
+            if !error_p.is_null() {
+                let msg = CStr::from_ptr(error_p).to_str().unwrap();
+                panic!("{}", msg);
+            }
         };
     }
 
@@ -96,10 +104,23 @@ impl Function {
         let bspayload = retain_backward_state_for.payload;
         let egpayload = exclude_gradients_for.payload;
         BackPropState { payload: unsafe {
-            cpp!([payload as "FunctionPtr", impayload as "unordered_map<Variable, ValuePtr>*", mut ompayload as "unordered_map<Variable, ValuePtr>*", dpayload as "DeviceDescriptor",
-                  bspayload as "unordered_set<Variable>*", egpayload as "unordered_set<Variable>*"] -> BackPropStateInner as "BackPropStatePtr" {
-                return payload->Forward(*impayload, *ompayload, dpayload, *bspayload, *egpayload);
-            })
+            let mut error_p: *mut i8 = ptr::null_mut();
+            let payload = cpp!([payload as "FunctionPtr", impayload as "unordered_map<Variable, ValuePtr>*", mut ompayload as "unordered_map<Variable, ValuePtr>*", dpayload as "DeviceDescriptor",
+                  bspayload as "unordered_set<Variable>*", egpayload as "unordered_set<Variable>*", mut error_p as "char*"] -> BackPropStateInner as "BackPropStatePtr" {
+                try {
+                    return payload->Forward(*impayload, *ompayload, dpayload, *bspayload, *egpayload);
+                } catch (std::exception& e) {
+                    auto what = e.what();
+                    error_p = new char[strlen(what)+1];
+                    strcpy(error_p, what);
+                    return nullptr;
+                }
+            });
+            if !error_p.is_null() {
+                let msg = CStr::from_ptr(error_p).to_str().unwrap();
+                panic!("{}", msg);
+            }
+            payload
         }}
     }
 
@@ -110,9 +131,20 @@ impl Function {
         let mut opayload = output_map.payload;
         // TODO: check if requested variables allow gradients
         unsafe {
-            cpp!([payload as "FunctionPtr", bppayload as "BackPropStatePtr", gpayload as "unordered_map<Variable, ValuePtr>*", mut opayload as "unordered_map<Variable, ValuePtr>*"] {
-                payload->Backward(bppayload, *gpayload, *opayload);
-            })
+            let mut error_p: *mut i8 = ptr::null_mut();
+            cpp!([payload as "FunctionPtr", bppayload as "BackPropStatePtr", gpayload as "unordered_map<Variable, ValuePtr>*", mut opayload as "unordered_map<Variable, ValuePtr>*", mut error_p as "char*"] {
+                try {
+                    payload->Backward(bppayload, *gpayload, *opayload);
+                } catch (std::exception& e) {
+                    auto what = e.what();
+                    error_p = new char[strlen(what)+1];
+                    strcpy(error_p, what);
+                }
+            });
+            if !error_p.is_null() {
+                let msg = CStr::from_ptr(error_p).to_str().unwrap();
+                panic!("{}", msg);
+            }
         };
     }
 
@@ -121,12 +153,23 @@ impl Function {
         let path_len = path.len();
         let payload = self.payload;
         unsafe {
-            cpp!([payload as "FunctionPtr", path_ptr as "char*", path_len as "size_t"] {
-                string path(path_ptr, path_ptr + path_len);
-                wstring wpath;
-                wpath.assign(path.begin(), path.end());
-                payload->Save(wpath);
-            })
+            let mut error_p: *mut i8 = ptr::null_mut();
+            cpp!([payload as "FunctionPtr", path_ptr as "char*", path_len as "size_t", mut error_p as "char*"] {
+                try {
+                    string path(path_ptr, path_ptr + path_len);
+                    wstring wpath;
+                    wpath.assign(path.begin(), path.end());
+                    payload->Save(wpath);
+                } catch (std::exception& e) {
+                    auto what = e.what();
+                    error_p = new char[strlen(what)+1];
+                    strcpy(error_p, what);
+                }
+            });
+            if !error_p.is_null() {
+                let msg = CStr::from_ptr(error_p).to_str().unwrap();
+                panic!("{}", msg);
+            }
         }
     }
 
@@ -135,12 +178,25 @@ impl Function {
         let path_len = path.len();
         let dpayload = device.payload;
         Function {payload: unsafe {
-            cpp!([path_ptr as "char*", path_len as "size_t", dpayload as "DeviceDescriptor"] -> FunctionInner as "FunctionPtr" {
-                string path(path_ptr, path_ptr + path_len);
-                wstring wpath;
-                wpath.assign(path.begin(), path.end());
-                return Function::Load(wpath, dpayload);
-            })
+            let mut error_p: *mut i8 = ptr::null_mut();
+            let payload = cpp!([path_ptr as "char*", path_len as "size_t", dpayload as "DeviceDescriptor", mut error_p as "char*"] -> FunctionInner as "FunctionPtr" {
+                try {
+                    string path(path_ptr, path_ptr + path_len);
+                    wstring wpath;
+                    wpath.assign(path.begin(), path.end());
+                    return Function::Load(wpath, dpayload);
+                } catch (std::exception& e) {
+                    auto what = e.what();
+                    error_p = new char[strlen(what)+1];
+                    strcpy(error_p, what);
+                    return nullptr;
+                }
+            });
+            if !error_p.is_null() {
+                let msg = CStr::from_ptr(error_p).to_str().unwrap();
+                panic!("{}", msg);
+            }
+            payload
         }}
     }
 
@@ -191,9 +247,22 @@ impl Function {
         let payload = self.payload;
         let repl_payload = placeholder_replacements.payload;
         Function {payload: unsafe {
-            cpp!([payload as "FunctionPtr", repl_payload as "unordered_map<Variable, Variable>*"] -> FunctionInner as "FunctionPtr" {
-                return payload->ReplacePlaceholders(*repl_payload);
-            })
+            let mut error_p: *mut i8 = ptr::null_mut();
+            let payload = cpp!([payload as "FunctionPtr", repl_payload as "unordered_map<Variable, Variable>*", mut error_p as "char*"] -> FunctionInner as "FunctionPtr" {
+                try {
+                    return payload->ReplacePlaceholders(*repl_payload);
+                } catch (std::exception& e) {
+                    auto what = e.what();
+                    error_p = new char[strlen(what)+1];
+                    strcpy(error_p, what);
+                    return nullptr;
+                }
+            });
+            if !error_p.is_null() {
+                let msg = CStr::from_ptr(error_p).to_str().unwrap();
+                panic!("{}", msg);
+            }
+            payload
         }}
     }
 
