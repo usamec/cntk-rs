@@ -539,4 +539,12 @@ mod tests {
 
         assert_eq!(result, vec!(2., 2., 2., 2., 0., 0., 2., 2., 2., 2., 2., 2.));
     }
+
+    #[test]
+    #[should_panic]
+    fn fail_times() {
+        let var = Variable::input_variable(&Shape::new(vec!(42,47)));
+        let var2 = Variable::input_variable(&Shape::new(vec!(23,25)));
+        let failed_times = times(var, var2);
+    }
 }

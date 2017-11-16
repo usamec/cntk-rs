@@ -1,4 +1,4 @@
-git#[macro_use]
+#[macro_use]
 extern crate cntk;
 extern crate rand;
 
