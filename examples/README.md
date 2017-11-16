@@ -8,9 +8,10 @@ http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz.
 
 ### Running
 
+Fully connected network:
 `cargo run --example mnist_mlp`
 
-`cargo run --example mnist_convnet`
+Convolutional network: `cargo run --example mnist_convnet`
 
 ## Text example (word embedings and seq2seq)
 
@@ -24,3 +25,11 @@ Calculating word embeddings.
 
 Simple sequence autoencoder with GRU units.
 `cargo run --example seq2seq`
+
+## Other examples
+
+### Quasi recurrent bidirectional neural network
+
+This network combines convolutional network with recurrent.
+
+`cargo run --example qrnn`

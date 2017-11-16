@@ -1351,14 +1351,48 @@ pub fn nce_loss<T: Into<Variable>, U: Into<Variable>, V: Into<Variable>, W: Into
 pub fn broadcast_as<T: Into<Variable>, U: Into<Variable>>(x: T, y: U) -> Function {
     let xv = x.into();
     let yv = y.into();
-    let xpayload: VariableInner = xv.borrow().payload;
-    let ypayload: VariableInner = yv.borrow().payload;
+    let xpayload: VariableInner = xv.payload;
+    let ypayload: VariableInner = yv.payload;
     let payload = unsafe {
         cpp!([xpayload as "Variable", ypayload as "Variable"] -> FunctionInner as "FunctionPtr" {
             try {
                 return Sequence::BroadcastAs(xpayload, ypayload);
             } catch (std::exception& e) {
                 printf("BroadcastAs throw an exception %s\n", e.what());
+                throw e;
+            }
+        })
+    };
+    Function {payload}
+}
+
+pub fn unpack<T: Into<Variable>>(x: T, padding_value: f32) -> Function {
+    let xv = x.into();
+    let xpayload: VariableInner = xv.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable", padding_value as "float"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return Sequence::Unpack(xpayload, padding_value, true);
+            } catch (std::exception& e) {
+                printf("Unpack throw an exception %s\n", e.what());
+                throw e;
+            }
+        })
+    };
+    Function {payload}
+}
+
+pub fn to_sequence_like<T: Into<Variable>, U: Into<Variable>>(x: T, y: U) -> Function {
+    let xv = x.into();
+    let yv = y.into();
+    let xpayload: VariableInner = xv.payload;
+    let ypayload: VariableInner = yv.payload;
+    let payload = unsafe {
+        cpp!([xpayload as "Variable", ypayload as "Variable"] -> FunctionInner as "FunctionPtr" {
+            try {
+                return ToSequenceLike(xpayload, ypayload);
+            } catch (std::exception& e) {
+                printf("ToSequenceLike throw an exception %s\n", e.what());
                 throw e;
             }
         })

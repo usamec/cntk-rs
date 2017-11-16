@@ -65,7 +65,10 @@ impl DataMap {
 
         let has_var = unsafe {
             cpp!([payload as "unordered_map<Variable, ValuePtr>*", var_payload as "Variable"] -> bool as "bool" {
-                return payload->count(var_payload);
+                auto it = payload->find(var_payload);
+                if (it == payload->end()) return false;
+                if (it->second.get() == NULL) return false;
+                return true;
             })
         };
 

@@ -285,6 +285,46 @@ mod tests {
         assert_eq!(result_last, vec!(165., 1120.));
     }
 
+    #[test]
+    fn simple_recurrence_future() {
+        let x = Variable::input_variable(&Shape::new(&vec!(2)));
+        let y = Variable::input_variable(&Shape::new(&vec!(2)));
+        let placeholder = Variable::placeholder(&Shape::new(&vec!(2)));
+        let output = plus(&placeholder, &element_times(&x, &y));
+        let placeholder_replacement = future_value(&output);
+
+        let replacement_map = replacementmap!{&placeholder => &placeholder_replacement};
+
+        let output_function = Function::from_variable(&output).replace_placeholders(&replacement_map);
+
+        let last_output = last(&output_function.outputs()[0]);
+        let last_output_function = Function::from_variable(&last_output);
+
+        let data: Vec<f32> = vec!(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0);
+        let data2: Vec<f32> = vec!(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 100.0);
+
+        let val = Value::sequence(&x.shape(), &data, DeviceDescriptor::cpu());
+        let val2 = Value::sequence(&y.shape(), &data2, DeviceDescriptor::cpu());
+
+        let mut datamap = DataMap::new();
+        datamap.add(&x, &val);
+        datamap.add(&y, &val2);
+
+        let mut outdatamap = DataMap::new();
+        outdatamap.add_null(&output);
+
+        output_function.evaluate(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
+
+        let result = outdatamap.get(&output).unwrap().to_vec();
+        assert_eq!(result, vec!(165., 1120., 164., 1116., 155., 1100., 130., 1064., 81., 1000.));
+
+        let mut outdatamap_last = DataMap::new();
+        outdatamap_last.add_null(&last_output);
+        last_output_function.evaluate(&datamap, &mut outdatamap_last, DeviceDescriptor::cpu());
+        let result_last = outdatamap_last.get(&last_output).unwrap().to_vec();
+        assert_eq!(result_last, vec!(81., 1000.));
+    }
+
     fn test_single_arg_func<F>(f: F, input_shape: &Shape, input: &[f32], expected_output: &[f32])
         where F: Fn(&Variable) -> Function {
         let var = Variable::input_variable(input_shape);

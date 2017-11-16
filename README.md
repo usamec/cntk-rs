@@ -44,12 +44,11 @@ Only works with ASCII strings for variable names and filenames.
 * Training fully connected feedforward, convolutional and recurrent network (have to test bidirectional though).
 * Saving and loading the model.
 * Code for most operations. - Almost all, except couple of helpers.
+* Demo of seq2seq model training.
 
 ## Planned in future
 
-* Demo of seq2seq model training.
 * Finish all operations.
-* Add more examples and documentation. (like seq2seq with word embeddings).
 * Catch all relevant C++ exceptions
 * Better build scripts.
 * Figure out whether we want NDArrayView or go directly from Rust data to Value and back.
