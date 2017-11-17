@@ -2,6 +2,7 @@ use shape::{Shape, ShapeInner};
 use device::DeviceDescriptor;
 use std::ptr;
 use std::borrow::Borrow;
+use std::ffi::CStr;
 
 cpp! {{
   #include <CNTKLibrary.h>
@@ -26,10 +27,23 @@ impl Value {
         let shape_payload = shape.payload;
         let device_payload = device.payload;
         let payload = unsafe {
-            cpp!([shape_payload as "NDShape", data_ptr as "float*", data_size as "size_t", device_payload as "DeviceDescriptor" ] -> ValueInner as "ValuePtr" {
-            vector<float> data(data_ptr, data_ptr + data_size);
-            return Value::CreateBatch(shape_payload, data, device_payload);
-        })
+            let mut error_p: *mut i8 = ptr::null_mut();
+            let payload = cpp!([shape_payload as "NDShape", data_ptr as "float*", data_size as "size_t", device_payload as "DeviceDescriptor", mut error_p as "char*" ] -> ValueInner as "ValuePtr" {
+                try {
+                    vector<float> data(data_ptr, data_ptr + data_size);
+                    return Value::CreateBatch(shape_payload, data, device_payload);
+                } catch (std::exception& e) {
+                    auto what = e.what();
+                    error_p = new char[strlen(what)+1];
+                    strcpy(error_p, what);
+                    return nullptr;
+                }
+            });
+            if !error_p.is_null() {
+                let msg = CStr::from_ptr(error_p).to_str().unwrap();
+                panic!("{}", msg);
+            }
+            payload
         };
         Value { payload }
     }
@@ -40,10 +54,23 @@ impl Value {
         let shape_payload = shape.payload;
         let device_payload = device.payload;
         let payload = unsafe {
-            cpp!([shape_payload as "NDShape", data_ptr as "float*", data_size as "size_t", device_payload as "DeviceDescriptor" ] -> ValueInner as "ValuePtr" {
-            vector<float> data(data_ptr, data_ptr + data_size);
-            return Value::CreateSequence(shape_payload, data, device_payload);
-        })
+            let mut error_p: *mut i8 = ptr::null_mut();
+            let payload = cpp!([shape_payload as "NDShape", data_ptr as "float*", data_size as "size_t", device_payload as "DeviceDescriptor", mut error_p as "char*" ] -> ValueInner as "ValuePtr" {
+                try {
+                    vector<float> data(data_ptr, data_ptr + data_size);
+                    return Value::CreateSequence(shape_payload, data, device_payload);
+                } catch (std::exception& e) {
+                    auto what = e.what();
+                    error_p = new char[strlen(what)+1];
+                    strcpy(error_p, what);
+                    return nullptr;
+                }
+            });
+            if !error_p.is_null() {
+                let msg = CStr::from_ptr(error_p).to_str().unwrap();
+                panic!("{}", msg);
+            }
+            payload
         };
         Value { payload }
     }
@@ -54,9 +81,22 @@ impl Value {
         let shape_payload = shape.payload;
         let device_payload = device.payload;
         let payload = unsafe {
-            cpp!([shape_payload as "NDShape", data_ptr as "float*", data_size as "size_t", device_payload as "DeviceDescriptor" ] -> ValueInner as "ValuePtr" {
-                return MakeSharedObject<Value>(MakeSharedObject<NDArrayView>(shape_payload, data_ptr, data_size, device_payload, true)->DeepClone());
-            })
+            let mut error_p: *mut i8 = ptr::null_mut();
+            let payload = cpp!([shape_payload as "NDShape", data_ptr as "float*", data_size as "size_t", device_payload as "DeviceDescriptor", mut error_p as "char*" ] -> ValueInner as "ValuePtr" {
+                try {
+                    return MakeSharedObject<Value>(MakeSharedObject<NDArrayView>(shape_payload, data_ptr, data_size, device_payload, true)->DeepClone());
+                } catch (std::exception& e) {
+                    auto what = e.what();
+                    error_p = new char[strlen(what)+1];
+                    strcpy(error_p, what);
+                    return nullptr;
+                }
+            });
+            if !error_p.is_null() {
+                let msg = CStr::from_ptr(error_p).to_str().unwrap();
+                panic!("{}", msg);
+            }
+            payload
         };
         Value { payload }
     }
@@ -67,10 +107,23 @@ impl Value {
         let shape_payload = shape.payload;
         let device_payload = device.payload;
         let payload = unsafe {
-            cpp!([shape_payload as "NDShape", data_ptr as "size_t*", data_size as "size_t", device_payload as "DeviceDescriptor" ] -> ValueInner as "ValuePtr" {
-            vector<size_t> data(data_ptr, data_ptr + data_size);
-            return Value::Create<float>(shape_payload, { data }, device_payload);
-        })
+            let mut error_p: *mut i8 = ptr::null_mut();
+            let payload = cpp!([shape_payload as "NDShape", data_ptr as "size_t*", data_size as "size_t", device_payload as "DeviceDescriptor", mut error_p as "char*" ] -> ValueInner as "ValuePtr" {
+                try {
+                    vector<size_t> data(data_ptr, data_ptr + data_size);
+                    return Value::Create<float>(shape_payload, { data }, device_payload);
+                } catch (std::exception& e) {
+                    auto what = e.what();
+                    error_p = new char[strlen(what)+1];
+                    strcpy(error_p, what);
+                    return nullptr;
+                }
+            });
+            if !error_p.is_null() {
+                let msg = CStr::from_ptr(error_p).to_str().unwrap();
+                panic!("{}", msg);
+            }
+            payload
         };
         Value { payload }
     }
@@ -84,13 +137,26 @@ impl Value {
         let shape_payload = shape.payload;
         let device_payload = device.payload;
         let payload = unsafe {
-            cpp!([shape_payload as "NDShape", sizes_ptr as "size_t*", n_batches as "size_t", data_ptr as "float**", device_payload as "DeviceDescriptor" ] -> ValueInner as "ValuePtr" {
-                vector<vector<float>> data;
-                for (size_t i = 0; i < n_batches; i++) {
-                    data.push_back(vector<float>(data_ptr[i], data_ptr[i] + sizes_ptr[i]));
+            let mut error_p: *mut i8 = ptr::null_mut();
+            let payload = cpp!([shape_payload as "NDShape", sizes_ptr as "size_t*", n_batches as "size_t", data_ptr as "float**", device_payload as "DeviceDescriptor", mut error_p as "char*" ] -> ValueInner as "ValuePtr" {
+                try {
+                    vector<vector<float>> data;
+                    for (size_t i = 0; i < n_batches; i++) {
+                        data.push_back(vector<float>(data_ptr[i], data_ptr[i] + sizes_ptr[i]));
+                    }
+                    return Value::CreateBatchOfSequences(shape_payload, data, device_payload, true);
+                } catch (std::exception& e) {
+                    auto what = e.what();
+                    error_p = new char[strlen(what)+1];
+                    strcpy(error_p, what);
+                    return nullptr;
                 }
-                return Value::CreateBatchOfSequences(shape_payload, data, device_payload, true);
-            })
+            });
+            if !error_p.is_null() {
+                let msg = CStr::from_ptr(error_p).to_str().unwrap();
+                panic!("{}", msg);
+            }
+            payload
         };
         Value { payload }
     }
@@ -104,13 +170,26 @@ impl Value {
         let shape_payload = shape.payload;
         let device_payload = device.payload;
         let payload = unsafe {
-            cpp!([shape_payload as "NDShape", sizes_ptr as "size_t*", n_batches as "size_t", data_ptr as "size_t**", device_payload as "DeviceDescriptor" ] -> ValueInner as "ValuePtr" {
-                vector<vector<size_t>> data;
-                for (size_t i = 0; i < n_batches; i++) {
-                    data.push_back(vector<size_t>(data_ptr[i], data_ptr[i] + sizes_ptr[i]));
+            let mut error_p: *mut i8 = ptr::null_mut();
+            let payload = cpp!([shape_payload as "NDShape", sizes_ptr as "size_t*", n_batches as "size_t", data_ptr as "size_t**", device_payload as "DeviceDescriptor", mut error_p as "char*"] -> ValueInner as "ValuePtr" {
+                try {
+                    vector<vector<size_t>> data;
+                    for (size_t i = 0; i < n_batches; i++) {
+                        data.push_back(vector<size_t>(data_ptr[i], data_ptr[i] + sizes_ptr[i]));
+                    }
+                    return Value::Create<float>(shape_payload, data, device_payload, true);
+                } catch (std::exception& e) {
+                    auto what = e.what();
+                    error_p = new char[strlen(what)+1];
+                    strcpy(error_p, what);
+                    return nullptr;
                 }
-                return Value::Create<float>(shape_payload, data, device_payload, true);
-            })
+            });
+            if !error_p.is_null() {
+                let msg = CStr::from_ptr(error_p).to_str().unwrap();
+                panic!("{}", msg);
+            }
+            payload
         };
         Value { payload }
     }

@@ -3,6 +3,9 @@ use learner::Learner;
 use function::Function;
 use data_map::DataMap;
 use device::DeviceDescriptor;
+use std::ptr;
+use std::ffi::CStr;
+
 
 cpp! {{
   #include <CNTKLibrary.h>
@@ -50,9 +53,20 @@ impl Trainer {
         let mut ompayload = outputs_to_fetch.payload;
         let dpayload = device.payload;
         unsafe {
-            cpp!([payload as "TrainerPtr", impayload as "unordered_map<Variable, ValuePtr>*", mut ompayload as "unordered_map<Variable, ValuePtr>*", dpayload as "DeviceDescriptor"] {
-                payload->TrainMinibatch(*impayload, *ompayload, dpayload);
-            })
+            let mut error_p: *mut i8 = ptr::null_mut();
+            cpp!([payload as "TrainerPtr", impayload as "unordered_map<Variable, ValuePtr>*", mut ompayload as "unordered_map<Variable, ValuePtr>*", dpayload as "DeviceDescriptor", mut error_p as "char*"] {
+                try {
+                    payload->TrainMinibatch(*impayload, *ompayload, dpayload);
+                } catch (std::exception& e) {
+                    auto what = e.what();
+                    error_p = new char[strlen(what)+1];
+                    strcpy(error_p, what);
+                }
+            });
+            if !error_p.is_null() {
+                let msg = CStr::from_ptr(error_p).to_str().unwrap();
+                panic!("{}", msg);
+            }
         };
     }
 }
