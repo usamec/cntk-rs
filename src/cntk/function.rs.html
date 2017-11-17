@@ -278,12 +278,95 @@
 <span id="233">233</span>
 <span id="234">234</span>
 <span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
 </pre><pre class="rust ">
 <span class="kw">use</span> <span class="ident">variable</span>::{<span class="ident">Variable</span>, <span class="ident">VariableInner</span>};
 <span class="kw">use</span> <span class="ident">variable_set</span>::<span class="ident">VariableSet</span>;
 <span class="kw">use</span> <span class="ident">data_map</span>::<span class="ident">DataMap</span>;
 <span class="kw">use</span> <span class="ident">replacement_map</span>::<span class="ident">ReplacementMap</span>;
 <span class="kw">use</span> <span class="ident">device</span>::<span class="ident">DeviceDescriptor</span>;
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ptr</span>;
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ffi</span>::<span class="ident">CStr</span>;
 
 <span class="macro">cpp</span><span class="macro">!</span> {{
   <span class="attribute">#<span class="ident">include</span> <span class="op">&lt;</span><span class="ident">CNTKLibrary</span>.<span class="ident">h</span><span class="op">&gt;</span>
@@ -296,7 +379,7 @@
 
 <span class="kw">type</span> <span class="ident">BackPropStateInner</span> <span class="op">=</span> [<span class="ident">u64</span>; <span class="number">2usize</span>]</span>;
 
-<span class="kw">type</span> <span class="ident">FunctionInner</span> <span class="op">=</span> [<span class="ident">u64</span>; <span class="number">2usize</span>];
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type</span> <span class="ident">FunctionInner</span> <span class="op">=</span> [<span class="ident">u64</span>; <span class="number">2usize</span>];
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Function</span> {
@@ -308,8 +391,9 @@
 }
 
 <span class="kw">impl</span> <span class="ident">Function</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_variable</span>(<span class="ident">var</span>: <span class="kw-2">&amp;</span><span class="ident">Variable</span>) <span class="op">-&gt;</span> <span class="ident">Function</span> {
-        <span class="kw">let</span> <span class="ident">payload</span> <span class="op">=</span> <span class="ident">var</span>.<span class="ident">payload</span>;
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_variable</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Variable</span><span class="op">&gt;&gt;</span>(<span class="ident">var</span>: <span class="ident">T</span>) <span class="op">-&gt;</span> <span class="ident">Function</span> {
+        <span class="kw">let</span> <span class="ident">varv</span> <span class="op">=</span> <span class="ident">var</span>.<span class="ident">into</span>();
+        <span class="kw">let</span> <span class="ident">payload</span> <span class="op">=</span> <span class="ident">varv</span>.<span class="ident">payload</span>;
         <span class="ident">Function</span> { <span class="ident">payload</span>: <span class="kw">unsafe</span> {
             <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">payload</span> <span class="kw">as</span> <span class="string">&quot;Variable&quot;</span>] <span class="op">-&gt;</span> <span class="ident">FunctionInner</span> <span class="kw">as</span> <span class="string">&quot;FunctionPtr&quot;</span> {
                 <span class="kw">return</span> <span class="ident">payload</span>;
@@ -337,12 +421,12 @@
         }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_variable</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Variable</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_variable</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Variable</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">payload</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">payload</span>;
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">num_outputs</span>() <span class="op">&gt;</span> <span class="number">1</span> {
-            <span class="prelude-val">None</span>
+            <span class="prelude-val">Err</span>(<span class="string">&quot;Cannot convert function with multiple outputs into Variable&quot;</span>)
         } <span class="kw">else</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">Variable</span> { <span class="ident">payload</span>: <span class="kw">unsafe</span> {
+            <span class="prelude-val">Ok</span>(<span class="ident">Variable</span> { <span class="ident">payload</span>: <span class="kw">unsafe</span> {
                 <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">payload</span> <span class="kw">as</span> <span class="string">&quot;FunctionPtr&quot;</span>] <span class="op">-&gt;</span> <span class="ident">VariableInner</span> <span class="kw">as</span> <span class="string">&quot;Variable&quot;</span> {
                     <span class="kw">return</span> <span class="ident">Variable</span>(<span class="ident">payload</span>);
                 })
@@ -356,9 +440,20 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ompayload</span> <span class="op">=</span> <span class="ident">output_data_map</span>.<span class="ident">payload</span>;
         <span class="kw">let</span> <span class="ident">dpayload</span> <span class="op">=</span> <span class="ident">device</span>.<span class="ident">payload</span>;
         <span class="kw">unsafe</span> {
-            <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">payload</span> <span class="kw">as</span> <span class="string">&quot;FunctionPtr&quot;</span>, <span class="ident">impayload</span> <span class="kw">as</span> <span class="string">&quot;unordered_map&lt;Variable, ValuePtr&gt;*&quot;</span>, <span class="kw-2">mut</span> <span class="ident">ompayload</span> <span class="kw">as</span> <span class="string">&quot;unordered_map&lt;Variable, ValuePtr&gt;*&quot;</span>, <span class="ident">dpayload</span> <span class="kw">as</span> <span class="string">&quot;DeviceDescriptor&quot;</span>] {
-                <span class="ident">payload</span><span class="op">-&gt;</span><span class="ident">Evaluate</span>(<span class="kw-2">*</span><span class="ident">impayload</span>, <span class="kw-2">*</span><span class="ident">ompayload</span>, <span class="ident">dpayload</span>);
-            })
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">error_p</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">i8</span> <span class="op">=</span> <span class="ident">ptr</span>::<span class="ident">null_mut</span>();
+            <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">payload</span> <span class="kw">as</span> <span class="string">&quot;FunctionPtr&quot;</span>, <span class="ident">impayload</span> <span class="kw">as</span> <span class="string">&quot;unordered_map&lt;Variable, ValuePtr&gt;*&quot;</span>, <span class="kw-2">mut</span> <span class="ident">ompayload</span> <span class="kw">as</span> <span class="string">&quot;unordered_map&lt;Variable, ValuePtr&gt;*&quot;</span>, <span class="ident">dpayload</span> <span class="kw">as</span> <span class="string">&quot;DeviceDescriptor&quot;</span>, <span class="kw-2">mut</span> <span class="ident">error_p</span> <span class="kw">as</span> <span class="string">&quot;char*&quot;</span>] {
+                <span class="ident">try</span> {
+                    <span class="ident">payload</span><span class="op">-&gt;</span><span class="ident">Evaluate</span>(<span class="kw-2">*</span><span class="ident">impayload</span>, <span class="kw-2">*</span><span class="ident">ompayload</span>, <span class="ident">dpayload</span>);
+                } <span class="ident">catch</span> (<span class="ident">std</span>::<span class="ident">exception</span><span class="op">&amp;</span> <span class="ident">e</span>) {
+                    <span class="ident">auto</span> <span class="ident">what</span> <span class="op">=</span> <span class="ident">e</span>.<span class="ident">what</span>();
+                    <span class="ident">error_p</span> <span class="op">=</span> <span class="ident">new</span> <span class="ident">char</span>[<span class="ident">strlen</span>(<span class="ident">what</span>)<span class="op">+</span><span class="number">1</span>];
+                    <span class="ident">strcpy</span>(<span class="ident">error_p</span>, <span class="ident">what</span>);
+                }
+            });
+            <span class="kw">if</span> <span class="op">!</span><span class="ident">error_p</span>.<span class="ident">is_null</span>() {
+                <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">CStr</span>::<span class="ident">from_ptr</span>(<span class="ident">error_p</span>).<span class="ident">to_str</span>().<span class="ident">unwrap</span>();
+                <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">msg</span>);
+            }
         };
     }
 
@@ -371,10 +466,23 @@
         <span class="kw">let</span> <span class="ident">bspayload</span> <span class="op">=</span> <span class="ident">retain_backward_state_for</span>.<span class="ident">payload</span>;
         <span class="kw">let</span> <span class="ident">egpayload</span> <span class="op">=</span> <span class="ident">exclude_gradients_for</span>.<span class="ident">payload</span>;
         <span class="ident">BackPropState</span> { <span class="ident">payload</span>: <span class="kw">unsafe</span> {
-            <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">payload</span> <span class="kw">as</span> <span class="string">&quot;FunctionPtr&quot;</span>, <span class="ident">impayload</span> <span class="kw">as</span> <span class="string">&quot;unordered_map&lt;Variable, ValuePtr&gt;*&quot;</span>, <span class="kw-2">mut</span> <span class="ident">ompayload</span> <span class="kw">as</span> <span class="string">&quot;unordered_map&lt;Variable, ValuePtr&gt;*&quot;</span>, <span class="ident">dpayload</span> <span class="kw">as</span> <span class="string">&quot;DeviceDescriptor&quot;</span>,
-                  <span class="ident">bspayload</span> <span class="kw">as</span> <span class="string">&quot;unordered_set&lt;Variable&gt;*&quot;</span>, <span class="ident">egpayload</span> <span class="kw">as</span> <span class="string">&quot;unordered_set&lt;Variable&gt;*&quot;</span>] <span class="op">-&gt;</span> <span class="ident">BackPropStateInner</span> <span class="kw">as</span> <span class="string">&quot;BackPropStatePtr&quot;</span> {
-                <span class="kw">return</span> <span class="ident">payload</span><span class="op">-&gt;</span><span class="ident">Forward</span>(<span class="kw-2">*</span><span class="ident">impayload</span>, <span class="kw-2">*</span><span class="ident">ompayload</span>, <span class="ident">dpayload</span>, <span class="kw-2">*</span><span class="ident">bspayload</span>, <span class="kw-2">*</span><span class="ident">egpayload</span>);
-            })
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">error_p</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">i8</span> <span class="op">=</span> <span class="ident">ptr</span>::<span class="ident">null_mut</span>();
+            <span class="kw">let</span> <span class="ident">payload</span> <span class="op">=</span> <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">payload</span> <span class="kw">as</span> <span class="string">&quot;FunctionPtr&quot;</span>, <span class="ident">impayload</span> <span class="kw">as</span> <span class="string">&quot;unordered_map&lt;Variable, ValuePtr&gt;*&quot;</span>, <span class="kw-2">mut</span> <span class="ident">ompayload</span> <span class="kw">as</span> <span class="string">&quot;unordered_map&lt;Variable, ValuePtr&gt;*&quot;</span>, <span class="ident">dpayload</span> <span class="kw">as</span> <span class="string">&quot;DeviceDescriptor&quot;</span>,
+                  <span class="ident">bspayload</span> <span class="kw">as</span> <span class="string">&quot;unordered_set&lt;Variable&gt;*&quot;</span>, <span class="ident">egpayload</span> <span class="kw">as</span> <span class="string">&quot;unordered_set&lt;Variable&gt;*&quot;</span>, <span class="kw-2">mut</span> <span class="ident">error_p</span> <span class="kw">as</span> <span class="string">&quot;char*&quot;</span>] <span class="op">-&gt;</span> <span class="ident">BackPropStateInner</span> <span class="kw">as</span> <span class="string">&quot;BackPropStatePtr&quot;</span> {
+                <span class="ident">try</span> {
+                    <span class="kw">return</span> <span class="ident">payload</span><span class="op">-&gt;</span><span class="ident">Forward</span>(<span class="kw-2">*</span><span class="ident">impayload</span>, <span class="kw-2">*</span><span class="ident">ompayload</span>, <span class="ident">dpayload</span>, <span class="kw-2">*</span><span class="ident">bspayload</span>, <span class="kw-2">*</span><span class="ident">egpayload</span>);
+                } <span class="ident">catch</span> (<span class="ident">std</span>::<span class="ident">exception</span><span class="op">&amp;</span> <span class="ident">e</span>) {
+                    <span class="ident">auto</span> <span class="ident">what</span> <span class="op">=</span> <span class="ident">e</span>.<span class="ident">what</span>();
+                    <span class="ident">error_p</span> <span class="op">=</span> <span class="ident">new</span> <span class="ident">char</span>[<span class="ident">strlen</span>(<span class="ident">what</span>)<span class="op">+</span><span class="number">1</span>];
+                    <span class="ident">strcpy</span>(<span class="ident">error_p</span>, <span class="ident">what</span>);
+                    <span class="kw">return</span> <span class="ident">nullptr</span>;
+                }
+            });
+            <span class="kw">if</span> <span class="op">!</span><span class="ident">error_p</span>.<span class="ident">is_null</span>() {
+                <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">CStr</span>::<span class="ident">from_ptr</span>(<span class="ident">error_p</span>).<span class="ident">to_str</span>().<span class="ident">unwrap</span>();
+                <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">msg</span>);
+            }
+            <span class="ident">payload</span>
         }}
     }
 
@@ -385,9 +493,20 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">opayload</span> <span class="op">=</span> <span class="ident">output_map</span>.<span class="ident">payload</span>;
         <span class="comment">// TODO: check if requested variables allow gradients</span>
         <span class="kw">unsafe</span> {
-            <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">payload</span> <span class="kw">as</span> <span class="string">&quot;FunctionPtr&quot;</span>, <span class="ident">bppayload</span> <span class="kw">as</span> <span class="string">&quot;BackPropStatePtr&quot;</span>, <span class="ident">gpayload</span> <span class="kw">as</span> <span class="string">&quot;unordered_map&lt;Variable, ValuePtr&gt;*&quot;</span>, <span class="kw-2">mut</span> <span class="ident">opayload</span> <span class="kw">as</span> <span class="string">&quot;unordered_map&lt;Variable, ValuePtr&gt;*&quot;</span>] {
-                <span class="ident">payload</span><span class="op">-&gt;</span><span class="ident">Backward</span>(<span class="ident">bppayload</span>, <span class="kw-2">*</span><span class="ident">gpayload</span>, <span class="kw-2">*</span><span class="ident">opayload</span>);
-            })
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">error_p</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">i8</span> <span class="op">=</span> <span class="ident">ptr</span>::<span class="ident">null_mut</span>();
+            <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">payload</span> <span class="kw">as</span> <span class="string">&quot;FunctionPtr&quot;</span>, <span class="ident">bppayload</span> <span class="kw">as</span> <span class="string">&quot;BackPropStatePtr&quot;</span>, <span class="ident">gpayload</span> <span class="kw">as</span> <span class="string">&quot;unordered_map&lt;Variable, ValuePtr&gt;*&quot;</span>, <span class="kw-2">mut</span> <span class="ident">opayload</span> <span class="kw">as</span> <span class="string">&quot;unordered_map&lt;Variable, ValuePtr&gt;*&quot;</span>, <span class="kw-2">mut</span> <span class="ident">error_p</span> <span class="kw">as</span> <span class="string">&quot;char*&quot;</span>] {
+                <span class="ident">try</span> {
+                    <span class="ident">payload</span><span class="op">-&gt;</span><span class="ident">Backward</span>(<span class="ident">bppayload</span>, <span class="kw-2">*</span><span class="ident">gpayload</span>, <span class="kw-2">*</span><span class="ident">opayload</span>);
+                } <span class="ident">catch</span> (<span class="ident">std</span>::<span class="ident">exception</span><span class="op">&amp;</span> <span class="ident">e</span>) {
+                    <span class="ident">auto</span> <span class="ident">what</span> <span class="op">=</span> <span class="ident">e</span>.<span class="ident">what</span>();
+                    <span class="ident">error_p</span> <span class="op">=</span> <span class="ident">new</span> <span class="ident">char</span>[<span class="ident">strlen</span>(<span class="ident">what</span>)<span class="op">+</span><span class="number">1</span>];
+                    <span class="ident">strcpy</span>(<span class="ident">error_p</span>, <span class="ident">what</span>);
+                }
+            });
+            <span class="kw">if</span> <span class="op">!</span><span class="ident">error_p</span>.<span class="ident">is_null</span>() {
+                <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">CStr</span>::<span class="ident">from_ptr</span>(<span class="ident">error_p</span>).<span class="ident">to_str</span>().<span class="ident">unwrap</span>();
+                <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">msg</span>);
+            }
         };
     }
 
@@ -396,12 +515,23 @@
         <span class="kw">let</span> <span class="ident">path_len</span> <span class="op">=</span> <span class="ident">path</span>.<span class="ident">len</span>();
         <span class="kw">let</span> <span class="ident">payload</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">payload</span>;
         <span class="kw">unsafe</span> {
-            <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">payload</span> <span class="kw">as</span> <span class="string">&quot;FunctionPtr&quot;</span>, <span class="ident">path_ptr</span> <span class="kw">as</span> <span class="string">&quot;char*&quot;</span>, <span class="ident">path_len</span> <span class="kw">as</span> <span class="string">&quot;size_t&quot;</span>] {
-                <span class="ident">string</span> <span class="ident">path</span>(<span class="ident">path_ptr</span>, <span class="ident">path_ptr</span> <span class="op">+</span> <span class="ident">path_len</span>);
-                <span class="ident">wstring</span> <span class="ident">wpath</span>;
-                <span class="ident">wpath</span>.<span class="ident">assign</span>(<span class="ident">path</span>.<span class="ident">begin</span>(), <span class="ident">path</span>.<span class="ident">end</span>());
-                <span class="ident">payload</span><span class="op">-&gt;</span><span class="ident">Save</span>(<span class="ident">wpath</span>);
-            })
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">error_p</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">i8</span> <span class="op">=</span> <span class="ident">ptr</span>::<span class="ident">null_mut</span>();
+            <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">payload</span> <span class="kw">as</span> <span class="string">&quot;FunctionPtr&quot;</span>, <span class="ident">path_ptr</span> <span class="kw">as</span> <span class="string">&quot;char*&quot;</span>, <span class="ident">path_len</span> <span class="kw">as</span> <span class="string">&quot;size_t&quot;</span>, <span class="kw-2">mut</span> <span class="ident">error_p</span> <span class="kw">as</span> <span class="string">&quot;char*&quot;</span>] {
+                <span class="ident">try</span> {
+                    <span class="ident">string</span> <span class="ident">path</span>(<span class="ident">path_ptr</span>, <span class="ident">path_ptr</span> <span class="op">+</span> <span class="ident">path_len</span>);
+                    <span class="ident">wstring</span> <span class="ident">wpath</span>;
+                    <span class="ident">wpath</span>.<span class="ident">assign</span>(<span class="ident">path</span>.<span class="ident">begin</span>(), <span class="ident">path</span>.<span class="ident">end</span>());
+                    <span class="ident">payload</span><span class="op">-&gt;</span><span class="ident">Save</span>(<span class="ident">wpath</span>);
+                } <span class="ident">catch</span> (<span class="ident">std</span>::<span class="ident">exception</span><span class="op">&amp;</span> <span class="ident">e</span>) {
+                    <span class="ident">auto</span> <span class="ident">what</span> <span class="op">=</span> <span class="ident">e</span>.<span class="ident">what</span>();
+                    <span class="ident">error_p</span> <span class="op">=</span> <span class="ident">new</span> <span class="ident">char</span>[<span class="ident">strlen</span>(<span class="ident">what</span>)<span class="op">+</span><span class="number">1</span>];
+                    <span class="ident">strcpy</span>(<span class="ident">error_p</span>, <span class="ident">what</span>);
+                }
+            });
+            <span class="kw">if</span> <span class="op">!</span><span class="ident">error_p</span>.<span class="ident">is_null</span>() {
+                <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">CStr</span>::<span class="ident">from_ptr</span>(<span class="ident">error_p</span>).<span class="ident">to_str</span>().<span class="ident">unwrap</span>();
+                <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">msg</span>);
+            }
         }
     }
 
@@ -410,12 +540,25 @@
         <span class="kw">let</span> <span class="ident">path_len</span> <span class="op">=</span> <span class="ident">path</span>.<span class="ident">len</span>();
         <span class="kw">let</span> <span class="ident">dpayload</span> <span class="op">=</span> <span class="ident">device</span>.<span class="ident">payload</span>;
         <span class="ident">Function</span> {<span class="ident">payload</span>: <span class="kw">unsafe</span> {
-            <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">path_ptr</span> <span class="kw">as</span> <span class="string">&quot;char*&quot;</span>, <span class="ident">path_len</span> <span class="kw">as</span> <span class="string">&quot;size_t&quot;</span>, <span class="ident">dpayload</span> <span class="kw">as</span> <span class="string">&quot;DeviceDescriptor&quot;</span>] <span class="op">-&gt;</span> <span class="ident">FunctionInner</span> <span class="kw">as</span> <span class="string">&quot;FunctionPtr&quot;</span> {
-                <span class="ident">string</span> <span class="ident">path</span>(<span class="ident">path_ptr</span>, <span class="ident">path_ptr</span> <span class="op">+</span> <span class="ident">path_len</span>);
-                <span class="ident">wstring</span> <span class="ident">wpath</span>;
-                <span class="ident">wpath</span>.<span class="ident">assign</span>(<span class="ident">path</span>.<span class="ident">begin</span>(), <span class="ident">path</span>.<span class="ident">end</span>());
-                <span class="kw">return</span> <span class="ident">Function</span>::<span class="ident">Load</span>(<span class="ident">wpath</span>, <span class="ident">dpayload</span>);
-            })
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">error_p</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">i8</span> <span class="op">=</span> <span class="ident">ptr</span>::<span class="ident">null_mut</span>();
+            <span class="kw">let</span> <span class="ident">payload</span> <span class="op">=</span> <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">path_ptr</span> <span class="kw">as</span> <span class="string">&quot;char*&quot;</span>, <span class="ident">path_len</span> <span class="kw">as</span> <span class="string">&quot;size_t&quot;</span>, <span class="ident">dpayload</span> <span class="kw">as</span> <span class="string">&quot;DeviceDescriptor&quot;</span>, <span class="kw-2">mut</span> <span class="ident">error_p</span> <span class="kw">as</span> <span class="string">&quot;char*&quot;</span>] <span class="op">-&gt;</span> <span class="ident">FunctionInner</span> <span class="kw">as</span> <span class="string">&quot;FunctionPtr&quot;</span> {
+                <span class="ident">try</span> {
+                    <span class="ident">string</span> <span class="ident">path</span>(<span class="ident">path_ptr</span>, <span class="ident">path_ptr</span> <span class="op">+</span> <span class="ident">path_len</span>);
+                    <span class="ident">wstring</span> <span class="ident">wpath</span>;
+                    <span class="ident">wpath</span>.<span class="ident">assign</span>(<span class="ident">path</span>.<span class="ident">begin</span>(), <span class="ident">path</span>.<span class="ident">end</span>());
+                    <span class="kw">return</span> <span class="ident">Function</span>::<span class="ident">Load</span>(<span class="ident">wpath</span>, <span class="ident">dpayload</span>);
+                } <span class="ident">catch</span> (<span class="ident">std</span>::<span class="ident">exception</span><span class="op">&amp;</span> <span class="ident">e</span>) {
+                    <span class="ident">auto</span> <span class="ident">what</span> <span class="op">=</span> <span class="ident">e</span>.<span class="ident">what</span>();
+                    <span class="ident">error_p</span> <span class="op">=</span> <span class="ident">new</span> <span class="ident">char</span>[<span class="ident">strlen</span>(<span class="ident">what</span>)<span class="op">+</span><span class="number">1</span>];
+                    <span class="ident">strcpy</span>(<span class="ident">error_p</span>, <span class="ident">what</span>);
+                    <span class="kw">return</span> <span class="ident">nullptr</span>;
+                }
+            });
+            <span class="kw">if</span> <span class="op">!</span><span class="ident">error_p</span>.<span class="ident">is_null</span>() {
+                <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">CStr</span>::<span class="ident">from_ptr</span>(<span class="ident">error_p</span>).<span class="ident">to_str</span>().<span class="ident">unwrap</span>();
+                <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">msg</span>);
+            }
+            <span class="ident">payload</span>
         }}
     }
 
@@ -431,40 +574,57 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">inputs</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Variable</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">payload</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">payload</span>;
         <span class="kw">let</span> <span class="ident">num_inputs</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">num_inputs</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">output</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">with_capacity</span>(<span class="ident">num_inputs</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">output</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">VariableInner</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">with_capacity</span>(<span class="ident">num_inputs</span>);
         <span class="kw">unsafe</span> {
             <span class="ident">output</span>.<span class="ident">set_len</span>(<span class="ident">num_inputs</span>);
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">output</span>.<span class="ident">as_mut_ptr</span>();
             <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">payload</span> <span class="kw">as</span> <span class="string">&quot;FunctionPtr&quot;</span>, <span class="kw-2">mut</span> <span class="ident">ptr</span> <span class="kw">as</span> <span class="string">&quot;Variable*&quot;</span>] {
                 <span class="ident">auto</span> <span class="ident">outputs</span> <span class="op">=</span> <span class="ident">payload</span><span class="op">-&gt;</span><span class="ident">Inputs</span>();
-                <span class="ident">copy</span>(<span class="ident">outputs</span>.<span class="ident">begin</span>(), <span class="ident">outputs</span>.<span class="ident">end</span>(), <span class="ident">ptr</span>);
+                <span class="kw">for</span> (<span class="ident">size_t</span> <span class="ident">i</span> <span class="op">=</span> <span class="number">0</span>; <span class="ident">i</span> <span class="op">&lt;</span> <span class="ident">outputs</span>.<span class="ident">size</span>(); <span class="ident">i</span><span class="op">+</span><span class="op">+</span>) {
+                    ::<span class="ident">new</span> (<span class="kw-2">&amp;</span><span class="ident">ptr</span>[<span class="ident">i</span>]) <span class="ident">Variable</span>(<span class="ident">outputs</span>[<span class="ident">i</span>]);
+                }
             })
         }
-        <span class="ident">output</span>
+        <span class="ident">output</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">Variable</span> {<span class="ident">payload</span>: <span class="ident">x</span>}).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Variable</span><span class="op">&gt;&gt;</span>()
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">outputs</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Variable</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">payload</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">payload</span>;
         <span class="kw">let</span> <span class="ident">num_outputs</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">num_outputs</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">output</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">with_capacity</span>(<span class="ident">num_outputs</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">output</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">VariableInner</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">with_capacity</span>(<span class="ident">num_outputs</span>);
         <span class="kw">unsafe</span> {
             <span class="ident">output</span>.<span class="ident">set_len</span>(<span class="ident">num_outputs</span>);
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">output</span>.<span class="ident">as_mut_ptr</span>();
             <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">payload</span> <span class="kw">as</span> <span class="string">&quot;FunctionPtr&quot;</span>, <span class="kw-2">mut</span> <span class="ident">ptr</span> <span class="kw">as</span> <span class="string">&quot;Variable*&quot;</span>] {
                 <span class="ident">auto</span> <span class="ident">outputs</span> <span class="op">=</span> <span class="ident">payload</span><span class="op">-&gt;</span><span class="ident">Outputs</span>();
-                <span class="ident">copy</span>(<span class="ident">outputs</span>.<span class="ident">begin</span>(), <span class="ident">outputs</span>.<span class="ident">end</span>(), <span class="ident">ptr</span>);
+                <span class="kw">for</span> (<span class="ident">size_t</span> <span class="ident">i</span> <span class="op">=</span> <span class="number">0</span>; <span class="ident">i</span> <span class="op">&lt;</span> <span class="ident">outputs</span>.<span class="ident">size</span>(); <span class="ident">i</span><span class="op">+</span><span class="op">+</span>) {
+                    ::<span class="ident">new</span> (<span class="kw-2">&amp;</span><span class="ident">ptr</span>[<span class="ident">i</span>]) <span class="ident">Variable</span>(<span class="ident">outputs</span>[<span class="ident">i</span>]);
+                }
             })
         }
-        <span class="ident">output</span>
+        <span class="ident">output</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">Variable</span> {<span class="ident">payload</span>: <span class="ident">x</span>}).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Variable</span><span class="op">&gt;&gt;</span>()
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">replace_placeholders</span>(<span class="self">self</span>, <span class="ident">placeholder_replacements</span>: <span class="kw-2">&amp;</span><span class="ident">ReplacementMap</span>) <span class="op">-&gt;</span> <span class="ident">Function</span> {
         <span class="kw">let</span> <span class="ident">payload</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">payload</span>;
         <span class="kw">let</span> <span class="ident">repl_payload</span> <span class="op">=</span> <span class="ident">placeholder_replacements</span>.<span class="ident">payload</span>;
         <span class="ident">Function</span> {<span class="ident">payload</span>: <span class="kw">unsafe</span> {
-            <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">payload</span> <span class="kw">as</span> <span class="string">&quot;FunctionPtr&quot;</span>, <span class="ident">repl_payload</span> <span class="kw">as</span> <span class="string">&quot;unordered_map&lt;Variable, Variable&gt;*&quot;</span>] <span class="op">-&gt;</span> <span class="ident">FunctionInner</span> <span class="kw">as</span> <span class="string">&quot;FunctionPtr&quot;</span> {
-                <span class="kw">return</span> <span class="ident">payload</span><span class="op">-&gt;</span><span class="ident">ReplacePlaceholders</span>(<span class="kw-2">*</span><span class="ident">repl_payload</span>);
-            })
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">error_p</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">i8</span> <span class="op">=</span> <span class="ident">ptr</span>::<span class="ident">null_mut</span>();
+            <span class="kw">let</span> <span class="ident">payload</span> <span class="op">=</span> <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">payload</span> <span class="kw">as</span> <span class="string">&quot;FunctionPtr&quot;</span>, <span class="ident">repl_payload</span> <span class="kw">as</span> <span class="string">&quot;unordered_map&lt;Variable, Variable&gt;*&quot;</span>, <span class="kw-2">mut</span> <span class="ident">error_p</span> <span class="kw">as</span> <span class="string">&quot;char*&quot;</span>] <span class="op">-&gt;</span> <span class="ident">FunctionInner</span> <span class="kw">as</span> <span class="string">&quot;FunctionPtr&quot;</span> {
+                <span class="ident">try</span> {
+                    <span class="kw">return</span> <span class="ident">payload</span><span class="op">-&gt;</span><span class="ident">ReplacePlaceholders</span>(<span class="kw-2">*</span><span class="ident">repl_payload</span>);
+                } <span class="ident">catch</span> (<span class="ident">std</span>::<span class="ident">exception</span><span class="op">&amp;</span> <span class="ident">e</span>) {
+                    <span class="ident">auto</span> <span class="ident">what</span> <span class="op">=</span> <span class="ident">e</span>.<span class="ident">what</span>();
+                    <span class="ident">error_p</span> <span class="op">=</span> <span class="ident">new</span> <span class="ident">char</span>[<span class="ident">strlen</span>(<span class="ident">what</span>)<span class="op">+</span><span class="number">1</span>];
+                    <span class="ident">strcpy</span>(<span class="ident">error_p</span>, <span class="ident">what</span>);
+                    <span class="kw">return</span> <span class="ident">nullptr</span>;
+                }
+            });
+            <span class="kw">if</span> <span class="op">!</span><span class="ident">error_p</span>.<span class="ident">is_null</span>() {
+                <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">CStr</span>::<span class="ident">from_ptr</span>(<span class="ident">error_p</span>).<span class="ident">to_str</span>().<span class="ident">unwrap</span>();
+                <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">msg</span>);
+            }
+            <span class="ident">payload</span>
         }}
     }
 
@@ -480,16 +640,18 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">parameters</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Variable</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">payload</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">payload</span>;
         <span class="kw">let</span> <span class="ident">num_parameters</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">num_parameters</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">output</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">with_capacity</span>(<span class="ident">num_parameters</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">output</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">VariableInner</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">with_capacity</span>(<span class="ident">num_parameters</span>);
         <span class="kw">unsafe</span> {
             <span class="ident">output</span>.<span class="ident">set_len</span>(<span class="ident">num_parameters</span>);
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">output</span>.<span class="ident">as_mut_ptr</span>();
             <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">payload</span> <span class="kw">as</span> <span class="string">&quot;FunctionPtr&quot;</span>, <span class="kw-2">mut</span> <span class="ident">ptr</span> <span class="kw">as</span> <span class="string">&quot;Variable*&quot;</span>] {
                 <span class="ident">auto</span> <span class="ident">outputs</span> <span class="op">=</span> <span class="ident">payload</span><span class="op">-&gt;</span><span class="ident">Parameters</span>();
-                <span class="ident">copy</span>(<span class="ident">outputs</span>.<span class="ident">begin</span>(), <span class="ident">outputs</span>.<span class="ident">end</span>(), <span class="ident">ptr</span>);
+                <span class="kw">for</span> (<span class="ident">size_t</span> <span class="ident">i</span> <span class="op">=</span> <span class="number">0</span>; <span class="ident">i</span> <span class="op">&lt;</span> <span class="ident">outputs</span>.<span class="ident">size</span>(); <span class="ident">i</span><span class="op">+</span><span class="op">+</span>) {
+                    ::<span class="ident">new</span> (<span class="kw-2">&amp;</span><span class="ident">ptr</span>[<span class="ident">i</span>]) <span class="ident">Variable</span>(<span class="ident">outputs</span>[<span class="ident">i</span>]);
+                }
             })
         }
-        <span class="ident">output</span>
+        <span class="ident">output</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">Variable</span> {<span class="ident">payload</span>: <span class="ident">x</span>}).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Variable</span><span class="op">&gt;&gt;</span>()
     }
 }
 

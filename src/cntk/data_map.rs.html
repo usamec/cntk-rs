@@ -162,6 +162,46 @@
 <span id="117">117</span>
 <span id="118">118</span>
 <span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
 </pre><pre class="rust ">
 <span class="kw">use</span> <span class="ident">variable</span>::<span class="ident">Variable</span>;
 <span class="kw">use</span> <span class="ident">value</span>::{<span class="ident">Value</span>, <span class="ident">ValueInner</span>};
@@ -197,8 +237,9 @@
     }
 
     <span class="doccomment">/// Adds binding to DataMap. If mapping for given Variable exists, it will be overwritten.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">variable</span>: <span class="kw-2">&amp;</span><span class="ident">Variable</span>, <span class="ident">value</span>: <span class="kw-2">&amp;</span><span class="ident">Value</span>) {
-        <span class="kw">let</span> <span class="ident">var_payload</span> <span class="op">=</span> <span class="ident">variable</span>.<span class="ident">payload</span>;
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Variable</span><span class="op">&gt;&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">variable</span>: <span class="ident">T</span>, <span class="ident">value</span>: <span class="kw-2">&amp;</span><span class="ident">Value</span>) {
+        <span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="ident">variable</span>.<span class="ident">into</span>();
+        <span class="kw">let</span> <span class="ident">var_payload</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">payload</span>;
         <span class="kw">let</span> <span class="ident">val_payload</span> <span class="op">=</span> <span class="ident">value</span>.<span class="ident">payload</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">payload</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">payload</span>;
 
@@ -210,8 +251,9 @@
     }
 
     <span class="doccomment">/// Adds binding to null to DataMap. Useful, when we want function evaluation to create the Value.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_null</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">variable</span>: <span class="kw-2">&amp;</span><span class="ident">Variable</span>) {
-        <span class="kw">let</span> <span class="ident">var_payload</span> <span class="op">=</span> <span class="ident">variable</span>.<span class="ident">payload</span>;
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_null</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Variable</span><span class="op">&gt;&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">variable</span>: <span class="ident">T</span>) {
+        <span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="ident">variable</span>.<span class="ident">into</span>();
+        <span class="kw">let</span> <span class="ident">var_payload</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">payload</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">payload</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">payload</span>;
 
         <span class="kw">unsafe</span> {
@@ -221,13 +263,17 @@
         }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">variable</span>: <span class="kw-2">&amp;</span><span class="ident">Variable</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Value</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">var_payload</span> <span class="op">=</span> <span class="ident">variable</span>.<span class="ident">payload</span>;
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Variable</span><span class="op">&gt;&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">variable</span>: <span class="ident">T</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Value</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="ident">variable</span>.<span class="ident">into</span>();
+        <span class="kw">let</span> <span class="ident">var_payload</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">payload</span>;
         <span class="kw">let</span> <span class="ident">payload</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">payload</span>;
 
         <span class="kw">let</span> <span class="ident">has_var</span> <span class="op">=</span> <span class="kw">unsafe</span> {
             <span class="macro">cpp</span><span class="macro">!</span>([<span class="ident">payload</span> <span class="kw">as</span> <span class="string">&quot;unordered_map&lt;Variable, ValuePtr&gt;*&quot;</span>, <span class="ident">var_payload</span> <span class="kw">as</span> <span class="string">&quot;Variable&quot;</span>] <span class="op">-&gt;</span> <span class="ident">bool</span> <span class="kw">as</span> <span class="string">&quot;bool&quot;</span> {
-                <span class="kw">return</span> <span class="ident">payload</span><span class="op">-&gt;</span><span class="ident">count</span>(<span class="ident">var_payload</span>);
+                <span class="ident">auto</span> <span class="ident">it</span> <span class="op">=</span> <span class="ident">payload</span><span class="op">-&gt;</span><span class="ident">find</span>(<span class="ident">var_payload</span>);
+                <span class="kw">if</span> (<span class="ident">it</span> <span class="op">==</span> <span class="ident">payload</span><span class="op">-&gt;</span><span class="ident">end</span>()) <span class="kw">return</span> <span class="bool-val">false</span>;
+                <span class="kw">if</span> (<span class="ident">it</span><span class="op">-&gt;</span><span class="ident">second</span>.<span class="ident">get</span>() <span class="op">==</span> <span class="ident">NULL</span>) <span class="kw">return</span> <span class="bool-val">false</span>;
+                <span class="kw">return</span> <span class="bool-val">true</span>;
             })
         };
 
@@ -256,6 +302,40 @@
     }
 }
 
+<span class="attribute">#[<span class="ident">macro_export</span>]</span>
+<span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">datamap</span> {
+    (@<span class="ident">single</span> $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>:<span class="ident">tt</span>)<span class="kw-2">*</span>) <span class="op">=&gt;</span> (());
+    (@<span class="ident">count</span> $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">rest</span>:<span class="ident">expr</span>),<span class="kw-2">*</span>) <span class="op">=&gt;</span> (<span class="op">&lt;</span>[()]<span class="op">&gt;</span>::<span class="ident">len</span>(<span class="kw-2">&amp;</span>[$(<span class="macro">datamap</span><span class="macro">!</span>(@<span class="ident">single</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">rest</span>)),<span class="kw-2">*</span>]));
+
+    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">key</span>:<span class="ident">expr</span> <span class="op">=&gt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">value</span>:<span class="ident">expr</span>,)<span class="op">+</span>) <span class="op">=&gt;</span> { <span class="macro">datamap</span><span class="macro">!</span>($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">key</span> <span class="op">=&gt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">value</span>),<span class="op">+</span>) };
+    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">key</span>:<span class="ident">expr</span> <span class="op">=&gt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">value</span>:<span class="ident">expr</span>),<span class="kw-2">*</span>) <span class="op">=&gt;</span> {
+        {
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">_map</span> <span class="op">=</span> <span class="ident">DataMap</span>::<span class="ident">new</span>();
+            $(
+                <span class="ident">_map</span>.<span class="ident">add</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">key</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">value</span>);
+            )<span class="op">*</span>
+            <span class="ident">_map</span>
+        }
+    };
+}
+
+<span class="attribute">#[<span class="ident">macro_export</span>]</span>
+<span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">outdatamap</span> {
+    (@<span class="ident">single</span> $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>:<span class="ident">tt</span>)<span class="kw-2">*</span>) <span class="op">=&gt;</span> (());
+    (@<span class="ident">count</span> $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">rest</span>:<span class="ident">expr</span>),<span class="kw-2">*</span>) <span class="op">=&gt;</span> (<span class="op">&lt;</span>[()]<span class="op">&gt;</span>::<span class="ident">len</span>(<span class="kw-2">&amp;</span>[$(<span class="macro">outdatamap</span><span class="macro">!</span>(@<span class="ident">single</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">rest</span>)),<span class="kw-2">*</span>]));
+    
+    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">key</span>:<span class="ident">expr</span>,)<span class="op">+</span>) <span class="op">=&gt;</span> { <span class="macro">outdatamap</span><span class="macro">!</span>($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">key</span>),<span class="op">+</span>) };
+    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">key</span>:<span class="ident">expr</span>),<span class="kw-2">*</span>) <span class="op">=&gt;</span> {
+        {
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">_set</span> <span class="op">=</span> <span class="ident">DataMap</span>::<span class="ident">new</span>();
+            $(
+                <span class="ident">_set</span>.<span class="ident">add_null</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">key</span>);
+            )<span class="op">*</span>
+            <span class="ident">_set</span>
+        }
+    };
+}
+
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
@@ -277,9 +357,9 @@
         <span class="kw">let</span> <span class="ident">data</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">f32</span><span class="op">&gt;</span> <span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>(<span class="number">11.0</span>, <span class="number">12.0</span>, <span class="number">13.0</span>, <span class="number">14.0</span>, <span class="number">15.0</span>, <span class="number">16.0</span>, <span class="number">17.0</span>, <span class="number">18.0</span>, <span class="number">19.0</span>, <span class="number">110.0</span>);
 
         <span class="kw">let</span> <span class="ident">val</span> <span class="op">=</span> <span class="ident">Value</span>::<span class="ident">batch</span>(<span class="kw-2">&amp;</span><span class="ident">var</span>.<span class="ident">shape</span>(), <span class="kw-2">&amp;</span><span class="ident">data</span>, <span class="ident">DeviceDescriptor</span>::<span class="ident">cpu</span>());
-        <span class="ident">map</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">var</span>, <span class="kw-2">&amp;</span><span class="ident">val</span>);
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">map</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">var</span>).<span class="ident">is_some</span>(), <span class="bool-val">true</span>);
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">map</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">var2</span>).<span class="ident">is_some</span>(), <span class="bool-val">false</span>);
+        <span class="ident">map</span>.<span class="ident">add</span>(<span class="ident">var</span>.<span class="ident">clone</span>(), <span class="kw-2">&amp;</span><span class="ident">val</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">map</span>.<span class="ident">get</span>(<span class="ident">var</span>).<span class="ident">is_some</span>(), <span class="bool-val">true</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">map</span>.<span class="ident">get</span>(<span class="ident">var2</span>).<span class="ident">is_some</span>(), <span class="bool-val">false</span>);
     }
 }</pre>
 </section>
