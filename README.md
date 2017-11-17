@@ -45,11 +45,11 @@ Only works with ASCII strings for variable names and filenames.
 * Saving and loading the model.
 * Code for most operations. - Almost all, except couple of helpers.
 * Demo of seq2seq model training.
+* Turning c++ exception into rust panics (most of the time).
 
 ## Planned in future
 
 * Finish all operations.
-* Catch all relevant C++ exceptions
 * Better build scripts.
 * Figure out whether we want NDArrayView or go directly from Rust data to Value and back.
 * Interop with some NDArray library.
