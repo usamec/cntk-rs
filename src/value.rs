@@ -3,7 +3,7 @@ use device::DeviceDescriptor;
 use std::ptr;
 use std::borrow::Borrow;
 use std::ffi::CStr;
-use ndarray::{Array, Dimension, IxDyn, ArrayD};
+use ndarray::{Array, Dimension, IxDyn, ArrayD, ArrayBase, Data};
 
 cpp! {{
   #include <CNTKLibrary.h>
@@ -53,7 +53,7 @@ impl Value {
         Value::batch(data_ptr, data_size, shape, device)
     }
 
-    pub fn batch_from_ndarray<D: Dimension>(shape: &Shape, data: &Array<f32, D>, device: DeviceDescriptor) -> Value {
+    pub fn batch_from_ndarray<D: Dimension, S: Data<Elem=f32>>(shape: &Shape, data: &ArrayBase<S, D>, device: DeviceDescriptor) -> Value {
         assert!(data.is_standard_layout(), "CNTK only supports NDArrays with standard layout");
         let expected_shape = shape.to_vec_reversed();
         let data_shape = data.shape();
@@ -95,7 +95,7 @@ impl Value {
         Value::sequence(data_ptr, data_size, shape, device)
     }
 
-    pub fn sequence_from_ndarray<D: Dimension>(shape: &Shape, data: &Array<f32, D>, device: DeviceDescriptor) -> Value {
+    pub fn sequence_from_ndarray<D: Dimension, S: Data<Elem=f32>>(shape: &Shape, data: &ArrayBase<S, D>, device: DeviceDescriptor) -> Value {
         assert!(data.is_standard_layout(), "CNTK only supports NDArrays with standard layout");
         let expected_shape = shape.to_vec_reversed();
         let data_shape = data.shape();
@@ -137,7 +137,7 @@ impl Value {
         Value::from_ptr(data_ptr, data_size, shape, device)
     }
 
-    pub fn from_ndarray<D: Dimension>(shape: &Shape, data: &Array<f32, D>, device: DeviceDescriptor) -> Value {
+    pub fn from_ndarray<D: Dimension, S: Data<Elem=f32>>(shape: &Shape, data: &ArrayBase<S, D>, device: DeviceDescriptor) -> Value {
         assert!(data.is_standard_layout(), "CNTK only supports NDArrays with standard layout");
         let expected_shape = shape.to_vec_reversed();
         let data_shape = data.shape();
@@ -211,7 +211,7 @@ impl Value {
         Value::batch_of_sequences(sizes_ptr, n_batches, data_ptr, shape, device)
     }
 
-    pub fn batch_of_sequences_from_ndarray<D: Dimension, T: Borrow<Array<f32, D>>>(shape: &Shape, seqs: &[T], device: DeviceDescriptor) -> Value {
+    pub fn batch_of_sequences_from_ndarray<S: Data<Elem=f32>, D: Dimension, T: Borrow<ArrayBase<S, D>>>(shape: &Shape, seqs: &[T], device: DeviceDescriptor) -> Value {
         let expected_shape = shape.to_vec_reversed();
         for seq in seqs {
             let data = seq.borrow();
