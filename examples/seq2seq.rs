@@ -15,7 +15,6 @@ use std::io::BufReader;
 use std::io::prelude::*;
 use regex::Regex;
 use std::collections::HashMap;
-use rand::Rng;
 use rand::distributions::{IndependentSample, Range};
 
 fn tokenize(s: &str) -> Vec<String> {
@@ -25,7 +24,7 @@ fn tokenize(s: &str) -> Vec<String> {
 
 fn build_vocab(tokens: &[String]) -> (HashMap<String, usize>, Vec<usize>) {
     let counts = tokens.iter().fold(HashMap::new(), |mut map, x| {
-        if (!map.contains_key(x)) {
+        if !map.contains_key(x) {
             map.insert(x.clone(), 0);
         }
         *map.get_mut(x).unwrap() += 1;
@@ -35,7 +34,7 @@ fn build_vocab(tokens: &[String]) -> (HashMap<String, usize>, Vec<usize>) {
         if counts[x] < 10 {
             data.push(0)
         } else {
-            if (!map.contains_key(x)) {
+            if !map.contains_key(x) {
                 let id = map.len() + 1;
                 map.insert(x.clone(), id);
             }
@@ -43,12 +42,6 @@ fn build_vocab(tokens: &[String]) -> (HashMap<String, usize>, Vec<usize>) {
         }
         (map, data)
     })
-}
-
-fn linear_layer<T: Into<Variable>>(input: T, input_size: usize, output_size: usize) -> Function {
-    let w = Variable::parameter(&Shape::new(&vec!(output_size, input_size)), &ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
-    let b = Variable::parameter(&Shape::new(&vec!(output_size)), &ParameterInitializer::glorot_uniform(), DeviceDescriptor::cpu());
-    return plus(&b, times(&w, input));
 }
 
 fn gru_layer<T: Into<Variable>>(input: T, input_size: usize, hidden_size: usize, init_value: Option<&Variable>) -> Function {
@@ -95,7 +88,6 @@ fn main() {
     let (vocab, translated_tokens) = build_vocab(&tokens);
 
     let num_words = vocab.len();
-    let embedding_size = 100;
     
     let num_tokens = num_words + 1; // num_words tokens has special meaning (end of sequence)
 
@@ -136,7 +128,7 @@ fn main() {
         let mut encoder_input_batch = Vec::new();
         let mut decoder_input_batch = Vec::new();
         let mut decoder_labels_batch = Vec::new();
-        for i in 0..batch_size {
+        for _i in 0..batch_size {
             let pos = start_range.ind_sample(&mut rng);
             let len = size_range.ind_sample(&mut rng);
             let encoder_input_sample = translated_tokens[pos..pos + len].to_owned();

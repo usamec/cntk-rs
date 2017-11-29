@@ -3,7 +3,7 @@ use device::DeviceDescriptor;
 use std::ptr;
 use std::borrow::Borrow;
 use std::ffi::CStr;
-use ndarray::{Array, Dimension, IxDyn, ArrayD, ArrayBase, Data};
+use ndarray::{Array, Dimension, ArrayD, ArrayBase, Data};
 
 cpp! {{
   #include <CNTKLibrary.h>

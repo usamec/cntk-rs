@@ -49,7 +49,6 @@ mod tests {
 
     use ops::*;
 
-    use ndarray::Array2;
     #[test]
     fn simple_add() {
         let var = Variable::input_variable(&Shape::new(vec!(5)));
@@ -164,7 +163,7 @@ mod tests {
             let trainer = Trainer::new(&output_func, &error_func, &learner);
             let mut lastloss = 1000000.0;
 
-            for iter in 0..5000 {
+            for _iter in 0..5000 {
                 let data = vec!(rng_next(&mut rng_seed), rng_next(&mut rng_seed), rng_next(&mut rng_seed),
                                rng_next(&mut rng_seed), rng_next(&mut rng_seed), rng_next(&mut rng_seed));
                 let odata = vec!(data[0] * data[1] + data[2],
@@ -179,7 +178,7 @@ mod tests {
                 outdatamap.add_null(&error);
 
                 trainer.train_minibatch(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
-                let result = outdatamap.get(&output_value).unwrap().to_vec();
+                let _result = outdatamap.get(&output_value).unwrap().to_vec();
                 let loss = outdatamap.get(&error).unwrap().to_vec();
                 lastloss = loss[0];
             }
@@ -240,18 +239,18 @@ mod tests {
         let trainer = Trainer::new_with_evalatuion(&output_func, &loss_func, &wrong_labels_func, &learner);
         let mut lastloss = 1000000.0;
 
-        for iter in 0..50000 {
+        for _iter in 0..50000 {
             let data = vec!(rng_next(&mut rng_seed), rng_next(&mut rng_seed), rng_next(&mut rng_seed),
                            rng_next(&mut rng_seed));
             let r1 = data[0]*data[0] + data[1]*data[1];
             let r2 = data[2]*data[2] + data[3]*data[3];
 
-            let odata = vec!(if (r1 < 0.3) {1.0} else {0.0},
-                             if (r1 >= 0.3 && r1 < 0.6) {1.0} else {0.0},
-                             if (r1 >= 0.6) {1.0} else {0.0},
-                             if (r2 < 0.3) {1.0} else {0.0},
-                             if (r2 >= 0.3 && r2 < 0.6) {1.0} else {0.0},
-                             if (r2 >= 0.6) {1.0} else {0.0}
+            let odata = vec!(if r1 < 0.3 {1.0} else {0.0},
+                             if r1 >= 0.3 && r1 < 0.6 {1.0} else {0.0},
+                             if r1 >= 0.6 {1.0} else {0.0},
+                             if r2 < 0.3 {1.0} else {0.0},
+                             if r2 >= 0.3 && r2 < 0.6 {1.0} else {0.0},
+                             if r2 >= 0.6 {1.0} else {0.0}
                             );
 
             let value = Value::batch_from_vec(&x.shape(), &data, DeviceDescriptor::cpu());
@@ -265,9 +264,9 @@ mod tests {
             outdatamap.add_null(&wrong_labels);
 
             trainer.train_minibatch(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
-            let result = outdatamap.get(&output_value).unwrap().to_vec();
+            let _result = outdatamap.get(&output_value).unwrap().to_vec();
             let loss_val = outdatamap.get(&loss).unwrap().to_vec();
-            let wrong_labels_val = outdatamap.get(&wrong_labels).unwrap().to_vec();
+            let _wrong_labels_val = outdatamap.get(&wrong_labels).unwrap().to_vec();
             lastloss = lastloss * 0.9 + 0.1*loss_val[0];
         }
         assert!(lastloss < 0.5);
@@ -635,6 +634,6 @@ mod tests {
     fn fail_times() {
         let var = Variable::input_variable(&Shape::new(vec!(42,47)));
         let var2 = Variable::input_variable(&Shape::new(vec!(23,25)));
-        let failed_times = times(var, var2);
+        let _failed_times = times(var, var2);
     }
 }

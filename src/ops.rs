@@ -1336,11 +1336,6 @@ pub fn times<T: Into<Variable>, U: Into<Variable>>(x: T, y: U) -> Function {
             }
         });
         if !error_p.is_null() {
-             let msg = CStr::from_ptr(error_p).to_str().unwrap();
-             panic!("{}", msg);
-        }
-        payload;
-        if !error_p.is_null() {
             let msg = CStr::from_ptr(error_p).to_str().unwrap();
             panic!("{}", msg);
         }
@@ -1927,7 +1922,14 @@ pub fn clip<T: Into<Variable>, U: Into<Variable>, V: Into<Variable>>(x: T, min: 
     let payload = unsafe {
         let mut error_p: *mut i8 = ptr::null_mut();
         let payload = cpp!([xpayload as "Variable", minpayload as "Variable", maxpayload as "Variable", mut error_p as "char*"] -> FunctionInner as "FunctionPtr" {
-            return Clip(xpayload, minpayload, maxpayload);
+            try {
+                return Clip(xpayload, minpayload, maxpayload);
+            } catch (std::exception& e) {
+                auto what = e.what();
+                error_p = new char[strlen(what)+1];
+                strcpy(error_p, what);
+                return nullptr;
+            }
         });
         if !error_p.is_null() {
              let msg = CStr::from_ptr(error_p).to_str().unwrap();

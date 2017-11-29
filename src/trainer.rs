@@ -1,4 +1,3 @@
-use variable::{Variable};
 use learner::Learner;
 use function::Function;
 use data_map::DataMap;

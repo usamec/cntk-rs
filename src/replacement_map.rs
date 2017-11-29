@@ -1,5 +1,4 @@
 use variable::Variable;
-use shape::Shape;
 
 cpp! {{
   #include <CNTKLibrary.h>
@@ -77,12 +76,11 @@ macro_rules! replacementmap {
 mod tests {
     use super::*;
     use variable::*;
-    use value::*;
-    use device::*;
+    use shape::Shape;
 
     #[test]
     fn test_create() {
-        let map = ReplacementMap::new();
+        let _map = ReplacementMap::new();
     }
 
     #[test]

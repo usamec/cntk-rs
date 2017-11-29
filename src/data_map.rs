@@ -1,6 +1,5 @@
 use variable::Variable;
 use value::{Value, ValueInner};
-use shape::Shape;
 
 cpp! {{
   #include <CNTKLibrary.h>
@@ -137,10 +136,11 @@ mod tests {
     use variable::*;
     use value::*;
     use device::*;
+    use shape::Shape;
 
     #[test]
     fn test_create() {
-        let map = DataMap::new();
+        let _map = DataMap::new();
     }
 
     #[test]

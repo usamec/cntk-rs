@@ -3,7 +3,7 @@ extern crate cntk;
 extern crate regex;
 extern crate rand;
 
-use cntk::{Variable, Function, Value, Learner, Trainer, DoubleParameterSchedule, DataMap, Axis};
+use cntk::{Variable, Value, Learner, Trainer, DoubleParameterSchedule, DataMap, Axis};
 use cntk::ParameterInitializer;
 use cntk::set_max_num_cpu_threads;
 use cntk::Shape;
@@ -14,7 +14,6 @@ use std::io::BufReader;
 use std::io::prelude::*;
 use regex::Regex;
 use std::collections::HashMap;
-use rand::Rng;
 use rand::distributions::{IndependentSample, Range};
 
 fn tokenize(s: &str) -> Vec<String> {
@@ -24,7 +23,7 @@ fn tokenize(s: &str) -> Vec<String> {
 
 fn build_vocab(tokens: &[String]) -> (HashMap<String, usize>, Vec<usize>) {
     tokens.iter().fold((HashMap::new(), Vec::new()), |(mut map, mut data), x| {
-        if (!map.contains_key(x)) {
+        if !map.contains_key(x) {
             let id = map.len();
             map.insert(x.clone(), id);
         }
@@ -78,7 +77,7 @@ fn main() {
 
     let mut loss_sum = 0.0;
     for iter in 0..1000000 {
-        let idata = (0..10).map(|x| word_range.ind_sample(&mut rng)).collect::<Vec<usize>>();
+        let idata = (0..10).map(|_x| word_range.ind_sample(&mut rng)).collect::<Vec<usize>>();
         let odata = idata.iter().map(|x| {
             let mut unclipped = x + window_range.ind_sample(&mut rng);
             if unclipped >= translated_tokens.len() {

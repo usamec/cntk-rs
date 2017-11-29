@@ -15,7 +15,6 @@ fn build_dataset() -> (Vec<Vec<f32>>, Vec<Vec<f32>>) {
     let step_range = Range::new(-0.05f32, 0.05f32);
     let start_range = Range::new(-0.5f32, 0.5f32);
     let noise_dist = StudentT::new(1.0);
-    let coin = Range::new(0, 2);
 
     let step_num_range = Range::new(10, 20);
     let num_samples = 10000;
@@ -24,20 +23,20 @@ fn build_dataset() -> (Vec<Vec<f32>>, Vec<Vec<f32>>) {
     let mut sum = 0.;
     let mut sqr_sum = 0.;
     let mut count = 0.;
-    for i in 0..num_samples {
+    for _i in 0..num_samples {
         let mut output: Vec<f32> = Vec::new();
 
         let mut current = (start_range.ind_sample(&mut rng), start_range.ind_sample(&mut rng));
         let mut current_vel = (0.0, 0.0);
         let num_steps = step_num_range.ind_sample(&mut rng);
-        for j in 0..num_steps {
+        for _j in 0..num_steps {
             output.push(current.0);
             output.push(current.1);
             count += 2.;
             sum += current.0;
             sum += current.1;
-            sqr_sum += (current.0*current.0);
-            sqr_sum += (current.1*current.1);
+            sqr_sum += current.0 * current.0;
+            sqr_sum += current.1 * current.1;
             current_vel.0 += step_range.ind_sample(&mut rng);
             current_vel.1 += step_range.ind_sample(&mut rng);
             if current_vel.0 < -1. {
@@ -54,11 +53,6 @@ fn build_dataset() -> (Vec<Vec<f32>>, Vec<Vec<f32>>) {
             }
             current.0 += current_vel.0;
             current.1 += current_vel.1;
-            /*if coin.ind_sample(&mut rng) == 0 {
-                current.0 += step_range.ind_sample(&mut rng);
-            } else {
-                current.1 += step_range.ind_sample(&mut rng);
-            }*/
         }
 
         let input = output.iter().map(|&x| x + 0.1 * noise_dist.ind_sample(&mut rng) as f32).collect::<Vec<_>>();
@@ -91,7 +85,7 @@ fn qrnn_layer<T: Into<Variable>>(input: T, input_size: usize, output_size: usize
     let placeholder = Variable::placeholder(&Shape::new(vec!(output_size)));
 
     let output = plus(element_times(&gates, &new_values), element_times(minus(one, &gates), &placeholder));
-    let placeholder_replacement = if (forward) {
+    let placeholder_replacement = if forward {
         past_value(&output)
     } else {
         future_value(&output)
@@ -138,7 +132,7 @@ fn main() {
 
 
     println!("training start");
-    for iter in 0..50 {
+    for _iter in 0..50 {
         let mut total_loss = 0.0;
 
 
@@ -149,7 +143,7 @@ fn main() {
             let mut outdatamap = outdatamap!{&output, &loss};
 
             trainer.train_minibatch(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
-            let output_val = outdatamap.get(&output).unwrap().to_vec();
+            let _output_val = outdatamap.get(&output).unwrap().to_vec();
             let loss_val = outdatamap.get(&loss).unwrap().to_vec();
 
             total_loss += loss_val[0];

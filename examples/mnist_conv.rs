@@ -48,7 +48,7 @@ fn main() {
     let learner = Learner::sgd(&all_parameters, &DoubleParameterSchedule::constant(0.01));
     let trainer = Trainer::new_with_evalatuion(&output, &loss, &error_count, &learner);
 
-    let (trn_size, rows, cols) = (50_000, 28, 28);
+    let (trn_size, _rows, _cols) = (50_000, 28, 28);
 
     // Deconstruct the returned Mnist struct.
     let Mnist { trn_img, trn_lbl, val_img, val_lbl, .. } = MnistBuilder::new()
@@ -68,7 +68,7 @@ fn main() {
     let batch_size = 50;
 
     println!("training start");
-    for iter in 0..5 {
+    for _iter in 0..5 {
         let mut total_loss = 0.0;
         let mut total_error_count = 0.0;
         for batch_num in 0..1000 {
@@ -78,7 +78,7 @@ fn main() {
             let mut outdatamap = outdatamap!{&output, &loss, &error_count};
 
             trainer.train_minibatch(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
-            let output_val = outdatamap.get(&output).unwrap().to_vec();
+            let _output_val = outdatamap.get(&output).unwrap().to_vec();
             let loss_val = outdatamap.get(&loss).unwrap().to_vec();
             let error_count_val = outdatamap.get(&error_count).unwrap().to_vec();
 

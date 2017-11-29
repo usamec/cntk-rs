@@ -1,5 +1,4 @@
 use variable::Variable;
-use shape::Shape;
 
 cpp! {{
   #include <CNTKLibrary.h>
@@ -76,10 +75,11 @@ macro_rules! variableset {
 mod tests {
     use super::*;
     use variable::*;
+    use shape::Shape;
 
     #[test]
     fn test_create() {
-        let set = VariableSet::new();
+        let _set = VariableSet::new();
     }
 
     #[test]
