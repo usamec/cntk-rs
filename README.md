@@ -23,7 +23,7 @@ Build scripts are not ready yet, might not work outside of 64bit linux.
 
 ## Building and installing
 
-You need to have CNTK-2.2 installed and paths to includes and library files in
+You need to have CNTK-2.3 installed and paths to includes and library files in
 relevant enviroment variables (cntk activate scripts does this well).
 You also need g++-4.8 installed (because CNTK uses it to compile things).
 
@@ -41,7 +41,7 @@ Only works with ASCII strings for variable names and filenames.
 
 * Passing data in and out of computation.
 * Backpropagation.
-* Training fully connected feedforward, convolutional and recurrent network (have to test bidirectional though).
+* Training fully connected feedforward, convolutional and recurrent network.
 * Saving and loading the model.
 * Code for most operations. - Almost all, except couple of helpers.
 * Demo of seq2seq model training.
@@ -49,9 +49,10 @@ Only works with ASCII strings for variable names and filenames.
 
 ## Planned in future
 
+* GPU.
+* Interop with some NDArray library.
 * Finish all operations.
 * Better build scripts.
 * Figure out whether we want NDArrayView or go directly from Rust data to Value and back.
-* Interop with some NDArray library.
 * Builder pattern where appropriate (Variable?).
 

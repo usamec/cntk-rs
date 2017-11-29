@@ -56,7 +56,7 @@ impl Trainer {
             let mut error_p: *mut i8 = ptr::null_mut();
             cpp!([payload as "TrainerPtr", impayload as "unordered_map<Variable, ValuePtr>*", mut ompayload as "unordered_map<Variable, ValuePtr>*", dpayload as "DeviceDescriptor", mut error_p as "char*"] {
                 try {
-                    payload->TrainMinibatch(*impayload, *ompayload, dpayload);
+                    payload->TrainMinibatch(*impayload, false, *ompayload, dpayload);
                 } catch (std::exception& e) {
                     auto what = e.what();
                     error_p = new char[strlen(what)+1];
