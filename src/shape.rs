@@ -80,6 +80,15 @@ impl Shape {
         }
         ret
     }
+
+    pub fn to_vec_reversed(&self) -> Vec<usize> {
+        let mut ret = Vec::new();
+        for i in 0..self.rank() {
+            ret.push(self.get(i));
+        }
+        ret.reverse();
+        ret
+    }
 }
 
 impl Drop for Shape {

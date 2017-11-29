@@ -46,11 +46,12 @@ Only works with ASCII strings for variable names and filenames.
 * Code for most operations. - Almost all, except couple of helpers.
 * Demo of seq2seq model training.
 * Turning c++ exception into rust panics (most of the time).
+* Interop with NDArray library.
 
 ## Planned in future
 
 * GPU.
-* Interop with some NDArray library.
+* Better docs.
 * Finish all operations.
 * Better build scripts.
 * Figure out whether we want NDArrayView or go directly from Rust data to Value and back.

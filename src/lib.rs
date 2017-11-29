@@ -1,6 +1,9 @@
 #[macro_use]
 extern crate cpp;
 
+#[macro_use(array)]
+extern crate ndarray;
+
 mod shape;
 pub use shape::Shape;
 
@@ -45,23 +48,47 @@ mod tests {
     use super::*;
 
     use ops::*;
+
+    use ndarray::Array2;
     #[test]
     fn simple_add() {
         let var = Variable::input_variable(&Shape::new(vec!(5)));
         let var2 = Variable::input_variable(&Shape::new(vec!(5)));
         let plus = plus(&var, plus(&var, &var2));
-        let data: Vec<f32> = vec!(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0);
-        let data2: Vec<f32> = vec!(11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 110.0);
-        let val = Value::batch(&var.shape(), &data, DeviceDescriptor::cpu());
-        let val2 = Value::batch(&var2.shape(), &data2, DeviceDescriptor::cpu());
 
-        let datamap = datamap!{var => &val, var2 => &val2};
-        let mut outdatamap = outdatamap!{&plus};
+        {
+            let data: Vec<f32> = vec!(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0);
+            let data2: Vec<f32> = vec!(11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 110.0);
 
-        plus.evaluate(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
+            let val = Value::batch_from_vec(&var.shape(), &data, DeviceDescriptor::cpu());
+            let val2 = Value::batch_from_vec(&var2.shape(), &data2, DeviceDescriptor::cpu());
 
-        let result = outdatamap.get(&plus).unwrap().to_vec();
-        assert_eq!(result, vec!(13., 16., 19., 22., 25., 28., 31., 34., 37., 130.));
+            let datamap = datamap! {&var => &val, &var2 => &val2};
+            let mut outdatamap = outdatamap! {&plus};
+
+            plus.evaluate(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
+
+            let result = outdatamap.get(&plus).unwrap().to_vec();
+            assert_eq!(result, vec!(13., 16., 19., 22., 25., 28., 31., 34., 37., 130.));
+        }
+
+        {
+            let data = array![[1., 2., 3., 4., 5.], [6., 7., 8., 9., 10.]];
+            let data2 = array![[11., 12., 13., 14., 15.], [16., 17., 18., 19., 110.]];
+            let val = Value::batch_from_ndarray(&var.shape(), &data, DeviceDescriptor::cpu());
+            let val2 = Value::batch_from_ndarray(&var2.shape(), &data2, DeviceDescriptor::cpu());
+
+            let datamap = datamap! {&var => &val, &var2 => &val2};
+            let mut outdatamap = outdatamap! {&plus};
+
+            plus.evaluate(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
+
+            let result_vec = outdatamap.get(&plus).unwrap().to_vec();
+            assert_eq!(result_vec, vec!(13., 16., 19., 22., 25., 28., 31., 34., 37., 130.));
+
+            let result_array = outdatamap.get(&plus).unwrap().to_ndarray();
+            assert_eq!(result_array, array![[[13., 16., 19., 22., 25.]], [[28., 31., 34., 37., 130.]]].into_dyn());
+        }
     }
 
     #[test]
@@ -75,9 +102,9 @@ mod tests {
         let data2: Vec<f32> = vec!(11.0, 12.0);
         let data3: Vec<f32> = vec!(11.0, 12.0);
 
-        let val = Value::batch(&var.shape(), &data, DeviceDescriptor::cpu());
-        let val2 = Value::batch(&var2.shape(), &data2, DeviceDescriptor::cpu());
-        let val3 = Value::batch(&var3.shape(), &data3, DeviceDescriptor::cpu());
+        let val = Value::batch_from_vec(&var.shape(), &data, DeviceDescriptor::cpu());
+        let val2 = Value::batch_from_vec(&var2.shape(), &data2, DeviceDescriptor::cpu());
+        let val3 = Value::batch_from_vec(&var3.shape(), &data3, DeviceDescriptor::cpu());
 
         let mut datamap = DataMap::new();
         datamap.add(&var, &val);
@@ -112,6 +139,7 @@ mod tests {
         ret
     }
 
+    // TODO: this test is flaky, fix
     #[test]
     fn feedforward_net_training() {
         set_max_num_cpu_threads(1);
@@ -141,8 +169,8 @@ mod tests {
                                rng_next(&mut rng_seed), rng_next(&mut rng_seed), rng_next(&mut rng_seed));
                 let odata = vec!(data[0] * data[1] + data[2],
                                 data[3] * data[4] + data[5]);
-                let value = Value::batch(&x.shape(), &data, DeviceDescriptor::cpu());
-                let ovalue = Value::batch(&y.shape(), &odata, DeviceDescriptor::cpu());
+                let value = Value::batch_from_vec(&x.shape(), &data, DeviceDescriptor::cpu());
+                let ovalue = Value::batch_from_vec(&y.shape(), &odata, DeviceDescriptor::cpu());
                 let mut datamap = DataMap::new();
                 datamap.add(&x, &value);
                 datamap.add(&y, &ovalue);
@@ -172,7 +200,7 @@ mod tests {
                            rng_next(&mut rng_seed), rng_next(&mut rng_seed), rng_next(&mut rng_seed));
             let odata = vec!(data[0]*data[1] + data[2],
                             data[3]*data[4] + data[5]);
-            let value = Value::batch(&loaded_input.shape(), &data, DeviceDescriptor::cpu());
+            let value = Value::batch_from_vec(&loaded_input.shape(), &data, DeviceDescriptor::cpu());
             let mut datamap = DataMap::new();
             datamap.add(&loaded_input, &value);
             let mut outdatamap = DataMap::new();
@@ -226,8 +254,8 @@ mod tests {
                              if (r2 >= 0.6) {1.0} else {0.0}
                             );
 
-            let value = Value::batch(&x.shape(), &data, DeviceDescriptor::cpu());
-            let ovalue = Value::batch(&y.shape(), &odata, DeviceDescriptor::cpu());
+            let value = Value::batch_from_vec(&x.shape(), &data, DeviceDescriptor::cpu());
+            let ovalue = Value::batch_from_vec(&y.shape(), &odata, DeviceDescriptor::cpu());
             let mut datamap = DataMap::new();
             datamap.add(&x, &value);
             datamap.add(&y, &ovalue);
@@ -259,30 +287,56 @@ mod tests {
 
         let last_output = last(&output_function.outputs()[0]);
         let last_output_function = Function::from_variable(&last_output);
+        {
+            let data: Vec<f32> = vec!(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0);
+            let data2: Vec<f32> = vec!(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 100.0);
 
-        let data: Vec<f32> = vec!(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0);
-        let data2: Vec<f32> = vec!(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 100.0);
+            let val = Value::sequence_from_vec(&x.shape(), &data, DeviceDescriptor::cpu());
+            let val2 = Value::sequence_from_vec(&y.shape(), &data2, DeviceDescriptor::cpu());
 
-        let val = Value::sequence(&x.shape(), &data, DeviceDescriptor::cpu());
-        let val2 = Value::sequence(&y.shape(), &data2, DeviceDescriptor::cpu());
+            let mut datamap = DataMap::new();
+            datamap.add(&x, &val);
+            datamap.add(&y, &val2);
 
-        let mut datamap = DataMap::new();
-        datamap.add(&x, &val);
-        datamap.add(&y, &val2);
+            let mut outdatamap = DataMap::new();
+            outdatamap.add_null(&output);
 
-        let mut outdatamap = DataMap::new();
-        outdatamap.add_null(&output);
+            output_function.evaluate(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
 
-        output_function.evaluate(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
+            let result = outdatamap.get(&output).unwrap().to_vec();
+            assert_eq!(result, vec!(1., 4., 10., 20., 35., 56., 84., 120., 165., 1120.));
 
-        let result = outdatamap.get(&output).unwrap().to_vec();
-        assert_eq!(result, vec!(1., 4., 10., 20., 35., 56., 84., 120., 165., 1120.));
+            let mut outdatamap_last = DataMap::new();
+            outdatamap_last.add_null(&last_output);
+            last_output_function.evaluate(&datamap, &mut outdatamap_last, DeviceDescriptor::cpu());
+            let result_last = outdatamap_last.get(&last_output).unwrap().to_vec();
+            assert_eq!(result_last, vec!(165., 1120.));
+        }
+        {
+            let data = array![[1.0, 2.0], [3.0, 4.0], [5.0, 6.0], [7.0, 8.0], [9.0, 10.0]];
+            let data2 = array![[1.0, 2.0], [3.0, 4.0], [5.0, 6.0], [7.0, 8.0], [9.0, 100.0]];
 
-        let mut outdatamap_last = DataMap::new();
-        outdatamap_last.add_null(&last_output);
-        last_output_function.evaluate(&datamap, &mut outdatamap_last, DeviceDescriptor::cpu());
-        let result_last = outdatamap_last.get(&last_output).unwrap().to_vec();
-        assert_eq!(result_last, vec!(165., 1120.));
+            let val = Value::sequence_from_ndarray(&x.shape(), &data, DeviceDescriptor::cpu());
+            let val2 = Value::sequence_from_ndarray(&y.shape(), &data2, DeviceDescriptor::cpu());
+
+            let mut datamap = DataMap::new();
+            datamap.add(&x, &val);
+            datamap.add(&y, &val2);
+
+            let mut outdatamap = DataMap::new();
+            outdatamap.add_null(&output);
+
+            output_function.evaluate(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
+
+            let result = outdatamap.get(&output).unwrap().to_vec();
+            assert_eq!(result, vec!(1., 4., 10., 20., 35., 56., 84., 120., 165., 1120.));
+
+            let mut outdatamap_last = DataMap::new();
+            outdatamap_last.add_null(&last_output);
+            last_output_function.evaluate(&datamap, &mut outdatamap_last, DeviceDescriptor::cpu());
+            let result_last = outdatamap_last.get(&last_output).unwrap().to_vec();
+            assert_eq!(result_last, vec!(165., 1120.));
+        }
     }
 
     #[test]
@@ -303,8 +357,8 @@ mod tests {
         let data: Vec<f32> = vec!(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0);
         let data2: Vec<f32> = vec!(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 100.0);
 
-        let val = Value::sequence(&x.shape(), &data, DeviceDescriptor::cpu());
-        let val2 = Value::sequence(&y.shape(), &data2, DeviceDescriptor::cpu());
+        let val = Value::sequence_from_vec(&x.shape(), &data, DeviceDescriptor::cpu());
+        let val2 = Value::sequence_from_vec(&y.shape(), &data2, DeviceDescriptor::cpu());
 
         let mut datamap = DataMap::new();
         datamap.add(&x, &val);
@@ -329,7 +383,7 @@ mod tests {
         where F: Fn(&Variable) -> Function {
         let var = Variable::input_variable(input_shape);
         let out = f(&var);
-        let val = Value::batch(&var.shape(), input, DeviceDescriptor::cpu());
+        let val = Value::batch_from_vec(&var.shape(), input, DeviceDescriptor::cpu());
         let mut datamap = DataMap::new();
         datamap.add(&var, &val);
         let mut outdatamap = DataMap::new();
@@ -355,8 +409,8 @@ mod tests {
         let data: Vec<f32> = vec!(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
         let data2: Vec<f32> = vec!(11.0, 12.0, 13.0, 14.0, 15.0, 16.0);
 
-        let val = Value::batch(&var.shape(), &data, DeviceDescriptor::cpu());
-        let val2 = Value::batch(&var2.shape(), &data2, DeviceDescriptor::cpu());
+        let val = Value::batch_from_vec(&var.shape(), &data, DeviceDescriptor::cpu());
+        let val2 = Value::batch_from_vec(&var2.shape(), &data2, DeviceDescriptor::cpu());
 
         let mut datamap = DataMap::new();
         datamap.add(&var, &val);
@@ -380,8 +434,8 @@ mod tests {
         let data: Vec<f32> = vec!(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
         let data2: Vec<f32> = vec!(11.0, 12.0, 13.0, 14.0, 15.0, 16.0);
 
-        let val = Value::batch(&var.shape(), &data, DeviceDescriptor::cpu());
-        let val2 = Value::batch(&var2.shape(), &data2, DeviceDescriptor::cpu());
+        let val = Value::batch_from_vec(&var.shape(), &data, DeviceDescriptor::cpu());
+        let val2 = Value::batch_from_vec(&var2.shape(), &data2, DeviceDescriptor::cpu());
 
         let mut datamap = DataMap::new();
         datamap.add(&var, &val);
@@ -522,7 +576,7 @@ mod tests {
     }
 
     #[test]
-    fn test_sequence_batch() {
+    fn test_sequence_batch_one_hot() {
         let var = Variable::sparse_input_variable(&Shape::new(vec!(10)));
         let var2 = Variable::parameter(&Shape::new(&vec!(2, 10)), &ParameterInitializer::constant(2.), DeviceDescriptor::cpu());
 
@@ -538,6 +592,42 @@ mod tests {
         let result = outdatamap.get(&output).unwrap().to_vec();
 
         assert_eq!(result, vec!(2., 2., 2., 2., 0., 0., 2., 2., 2., 2., 2., 2.));
+    }
+
+    #[test]
+    fn test_sequence_batch() {
+        let var = Variable::input_variable(&Shape::new(vec!(3)));
+        let var2 = Variable::parameter(&Shape::new(&vec!(2, 3)), &ParameterInitializer::constant(2.), DeviceDescriptor::cpu());
+
+        let output = times(&var2, &var);
+
+        {
+            let val = Value::batch_of_sequences_from_vec(&var.shape(), &vec!(vec!(1., 1., 2., 1., 1., 3.), vec!(1., 1., 4., 1., 1., 5., 1., 1., 6., 1., 1., 7.)), DeviceDescriptor::cpu());
+
+            let datamap = datamap! {&var => &val};
+            let mut outdatamap = outdatamap! {&output};
+
+            output.evaluate(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
+
+            let result = outdatamap.get(&output).unwrap().to_vec();
+
+            assert_eq!(result, vec!(8., 8., 10., 10., 0., 0., 0., 0., 12., 12., 14., 14., 16., 16., 18., 18.));
+        }
+
+        {
+            let val = Value::batch_of_sequences_from_ndarray(&var.shape(), &vec!(array![[1., 1., 2.], [1., 1., 3.]], array![[1., 1., 4.], [1., 1., 5.], [1., 1., 6.], [1., 1., 7.]]), DeviceDescriptor::cpu());
+
+            let datamap = datamap! {&var => &val};
+            let mut outdatamap = outdatamap! {&output};
+
+            output.evaluate(&datamap, &mut outdatamap, DeviceDescriptor::cpu());
+
+            let result_vec = outdatamap.get(&output).unwrap().to_vec();
+            assert_eq!(result_vec, vec!(8., 8., 10., 10., 0., 0., 0., 0., 12., 12., 14., 14., 16., 16., 18., 18.));
+
+            let result_array = outdatamap.get(&output).unwrap().to_ndarray();
+            assert_eq!(result_array, array![[[8., 8.], [10., 10.], [0., 0.], [0., 0.]], [[12., 12.], [14., 14.], [16., 16.], [18., 18.]]].into_dyn());
+        }
     }
 
     #[test]

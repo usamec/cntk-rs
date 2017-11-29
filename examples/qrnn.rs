@@ -143,8 +143,8 @@ fn main() {
 
 
         for batch_num in 0..1000 {
-            let value = Value::batch_of_sequences(&x.shape(), &input_data[batch_num*batch_size..(batch_num+1)*batch_size], DeviceDescriptor::cpu());
-            let ovalue = Value::batch_of_sequences(&y.shape(), &output_data[batch_num*batch_size..(batch_num+1)*batch_size], DeviceDescriptor::cpu());
+            let value = Value::batch_of_sequences_from_vec(&x.shape(), &input_data[batch_num*batch_size..(batch_num+1)*batch_size], DeviceDescriptor::cpu());
+            let ovalue = Value::batch_of_sequences_from_vec(&y.shape(), &output_data[batch_num*batch_size..(batch_num+1)*batch_size], DeviceDescriptor::cpu());
             let datamap = datamap!{&x => &value, &y => &ovalue};
             let mut outdatamap = outdatamap!{&output, &loss};
 

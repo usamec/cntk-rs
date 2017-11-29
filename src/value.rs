@@ -3,6 +3,7 @@ use device::DeviceDescriptor;
 use std::ptr;
 use std::borrow::Borrow;
 use std::ffi::CStr;
+use ndarray::{Array, Dimension, IxDyn, ArrayD};
 
 cpp! {{
   #include <CNTKLibrary.h>
@@ -21,9 +22,7 @@ pub struct Value {
 }
 
 impl Value {
-    pub fn batch(shape: &Shape, data: &[f32], device: DeviceDescriptor) -> Value {
-        let data_ptr = data.as_ptr();
-        let data_size = data.len();
+    fn batch(data_ptr: *const f32, data_size: usize, shape: &Shape, device: DeviceDescriptor) -> Value {
         let shape_payload = shape.payload;
         let device_payload = device.payload;
         let payload = unsafe {
@@ -48,9 +47,24 @@ impl Value {
         Value { payload }
     }
 
-    pub fn sequence(shape: &Shape, data: &[f32], device: DeviceDescriptor) -> Value {
+    pub fn batch_from_vec(shape: &Shape, data: &[f32], device: DeviceDescriptor) -> Value {
         let data_ptr = data.as_ptr();
         let data_size = data.len();
+        Value::batch(data_ptr, data_size, shape, device)
+    }
+
+    pub fn batch_from_ndarray<D: Dimension>(shape: &Shape, data: &Array<f32, D>, device: DeviceDescriptor) -> Value {
+        assert!(data.is_standard_layout(), "CNTK only supports NDArrays with standard layout");
+        let expected_shape = shape.to_vec_reversed();
+        let data_shape = data.shape();
+        assert!(data_shape.len() >= expected_shape.len());
+        assert!(expected_shape == &data_shape[data_shape.len() - expected_shape.len()..]);
+        let data_ptr = data.as_ptr();
+        let data_size = data.len();
+        Value::batch(data_ptr, data_size, shape, device)
+    }
+
+    fn sequence(data_ptr: *const f32, data_size: usize, shape: &Shape, device: DeviceDescriptor) -> Value {
         let shape_payload = shape.payload;
         let device_payload = device.payload;
         let payload = unsafe {
@@ -75,9 +89,24 @@ impl Value {
         Value { payload }
     }
 
-    pub fn from_vec(shape: &Shape, data: &[f32], device: DeviceDescriptor) -> Value {
+    pub fn sequence_from_vec(shape: &Shape, data: &[f32], device: DeviceDescriptor) -> Value {
         let data_ptr = data.as_ptr();
         let data_size = data.len();
+        Value::sequence(data_ptr, data_size, shape, device)
+    }
+
+    pub fn sequence_from_ndarray<D: Dimension>(shape: &Shape, data: &Array<f32, D>, device: DeviceDescriptor) -> Value {
+        assert!(data.is_standard_layout(), "CNTK only supports NDArrays with standard layout");
+        let expected_shape = shape.to_vec_reversed();
+        let data_shape = data.shape();
+        assert!(data_shape.len() >= expected_shape.len());
+        assert!(expected_shape == &data_shape[data_shape.len() - expected_shape.len()..]);
+        let data_ptr = data.as_ptr();
+        let data_size = data.len();
+        Value::sequence(data_ptr, data_size, shape, device)
+    }
+
+    fn from_ptr(data_ptr: *const f32, data_size: usize, shape: &Shape, device: DeviceDescriptor) -> Value {
         let shape_payload = shape.payload;
         let device_payload = device.payload;
         let payload = unsafe {
@@ -99,6 +128,23 @@ impl Value {
             payload
         };
         Value { payload }
+    }
+
+    pub fn from_vec(shape: &Shape, data: &[f32], device: DeviceDescriptor) -> Value {
+        let data_ptr = data.as_ptr();
+        let data_size = data.len();
+
+        Value::from_ptr(data_ptr, data_size, shape, device)
+    }
+
+    pub fn from_ndarray<D: Dimension>(shape: &Shape, data: &Array<f32, D>, device: DeviceDescriptor) -> Value {
+        assert!(data.is_standard_layout(), "CNTK only supports NDArrays with standard layout");
+        let expected_shape = shape.to_vec_reversed();
+        let data_shape = data.shape();
+        assert!(data_shape == &expected_shape[..]);
+        let data_ptr = data.as_ptr();
+        let data_size = data.len();
+        Value::from_ptr(data_ptr, data_size, shape, device)
     }
 
     pub fn one_hot_seq(shape: &Shape, seq: &[usize], device: DeviceDescriptor) -> Value {
@@ -128,12 +174,7 @@ impl Value {
         Value { payload }
     }
 
-    pub fn batch_of_sequences<T: Borrow<[f32]>>(shape: &Shape, seqs: &[T], device: DeviceDescriptor) -> Value {
-        let sizes = seqs.iter().map(|x| x.borrow().len()).collect::<Vec<usize>>();
-        let sizes_ptr = sizes.as_ptr();
-        let seqs_ptr = seqs.iter().map(|x| x.borrow().as_ptr()).collect::<Vec<_>>();
-        let data_ptr = seqs_ptr.as_ptr();
-        let n_batches = seqs.len();
+    fn batch_of_sequences(sizes_ptr: *const usize, n_batches: usize, data_ptr: *const *const f32, shape: &Shape, device: DeviceDescriptor) -> Value {
         let shape_payload = shape.payload;
         let device_payload = device.payload;
         let payload = unsafe {
@@ -159,6 +200,33 @@ impl Value {
             payload
         };
         Value { payload }
+    }
+
+    pub fn batch_of_sequences_from_vec<T: Borrow<[f32]>>(shape: &Shape, seqs: &[T], device: DeviceDescriptor) -> Value {
+        let sizes = seqs.iter().map(|x| x.borrow().len()).collect::<Vec<usize>>();
+        let sizes_ptr = sizes.as_ptr();
+        let seqs_ptr = seqs.iter().map(|x| x.borrow().as_ptr()).collect::<Vec<_>>();
+        let data_ptr = seqs_ptr.as_ptr();
+        let n_batches = seqs.len();
+        Value::batch_of_sequences(sizes_ptr, n_batches, data_ptr, shape, device)
+    }
+
+    pub fn batch_of_sequences_from_ndarray<D: Dimension, T: Borrow<Array<f32, D>>>(shape: &Shape, seqs: &[T], device: DeviceDescriptor) -> Value {
+        let expected_shape = shape.to_vec_reversed();
+        for seq in seqs {
+            let data = seq.borrow();
+            assert!(data.is_standard_layout(), "CNTK only supports NDArrays with standard layout");
+            let data_shape = data.shape();
+            assert!(data_shape.len() >= expected_shape.len());
+            assert!(expected_shape == &data_shape[data_shape.len() - expected_shape.len()..]);
+        }
+
+        let sizes = seqs.iter().map(|x| x.borrow().len()).collect::<Vec<usize>>();
+        let sizes_ptr = sizes.as_ptr();
+        let seqs_ptr = seqs.iter().map(|x| x.borrow().as_ptr()).collect::<Vec<_>>();
+        let data_ptr = seqs_ptr.as_ptr();
+        let n_batches = seqs.len();
+        Value::batch_of_sequences(sizes_ptr, n_batches, data_ptr, shape, device)
     }
 
     pub fn batch_of_one_hot_sequences<T: Borrow<[usize]>>(shape: &Shape, seqs: &[T], device: DeviceDescriptor) -> Value {
@@ -212,6 +280,12 @@ impl Value {
             ptr::copy(data, buffer.as_mut_ptr(), total_size);
         }
         buffer
+    }
+
+    pub fn to_ndarray(&self) -> ArrayD<f32> {
+        let vec = self.to_vec();
+        let shape = self.shape().to_vec_reversed();
+        Array::from_shape_vec(shape, vec).unwrap()
     }
 
     pub fn shape(&self) -> Shape {

@@ -72,8 +72,8 @@ fn main() {
         let mut total_loss = 0.0;
         let mut total_error_count = 0.0;
         for batch_num in 0..1000 {
-            let value = Value::batch(&x.shape(), &images[batch_num*batch_size*28*28..(batch_num+1)*batch_size*28*28], DeviceDescriptor::cpu());
-            let ovalue = Value::batch(&y.shape(), &labels[batch_num*batch_size*10..(batch_num+1)*batch_size*10], DeviceDescriptor::cpu());
+            let value = Value::batch_from_vec(&x.shape(), &images[batch_num*batch_size*28*28..(batch_num+1)*batch_size*28*28], DeviceDescriptor::cpu());
+            let ovalue = Value::batch_from_vec(&y.shape(), &labels[batch_num*batch_size*10..(batch_num+1)*batch_size*10], DeviceDescriptor::cpu());
             let datamap = datamap!{&x => &value, &y => &ovalue};
             let mut outdatamap = outdatamap!{&output, &loss, &error_count};
 
@@ -96,7 +96,7 @@ fn main() {
         val_labels[i*10+val_lbl[i] as usize] = 1.0
     }
 
-    let value = Value::batch(&x.shape(), &val_images, DeviceDescriptor::cpu());
+    let value = Value::batch_from_vec(&x.shape(), &val_images, DeviceDescriptor::cpu());
     // Non macro syntax for datamap initialization, just for an example
     let mut datamap = DataMap::new();
     datamap.add(&x, &value);

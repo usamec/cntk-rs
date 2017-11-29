@@ -69,8 +69,8 @@ fn main() {
         let mut total_error_count = 0.0;
         for batch_num in 0..1000 {
             // Values contain real data
-            let value = Value::batch(&x.shape(), &images[batch_num*batch_size*28*28..(batch_num+1)*batch_size*28*28], DeviceDescriptor::cpu());
-            let ovalue = Value::batch(&y.shape(), &labels[batch_num*batch_size*10..(batch_num+1)*batch_size*10], DeviceDescriptor::cpu());
+            let value = Value::batch_from_vec(&x.shape(), &images[batch_num*batch_size*28*28..(batch_num+1)*batch_size*28*28], DeviceDescriptor::cpu());
+            let ovalue = Value::batch_from_vec(&y.shape(), &labels[batch_num*batch_size*10..(batch_num+1)*batch_size*10], DeviceDescriptor::cpu());
 
             // Here we bind values to input variables
             let datamap = datamap!{&x => &value, &y => &ovalue};
@@ -102,7 +102,7 @@ fn main() {
     }
 
     // Create value for validation input
-    let value = Value::batch(&x.shape(), &val_images, DeviceDescriptor::cpu());
+    let value = Value::batch_from_vec(&x.shape(), &val_images, DeviceDescriptor::cpu());
 
     // Non macro syntax for datamap initializations, just for an example
     let mut datamap = DataMap::new();
