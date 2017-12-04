@@ -2,6 +2,8 @@
 
 Simple low level bindings for [CNTK library](https://github.com/Microsoft/CNTK/blob/release/2.2/Source/CNTKv2LibraryDll/API/CNTKLibrary.h) from Microsoft.
 
+[API Documentation](https://usamec.github.io/cntk-rs/cntk/index.html)
+
 ## Status
 
 Currently exploring ways how to interact with C++ API nicely from Rust.

@@ -1,3 +1,49 @@
+//! # CNTK
+//! 
+//! This is the Rust wrapper around Microsoft Congitive Toolkit library.
+//! The Microsoft Cognitive Toolkit (https://cntk.ai), is a unified deep-learning toolkit that
+//! describes neural networks as a series of computational steps via a directed graph. In this
+//! directed graph, leaf nodes represent input values or network parameters, while other nodes
+//! represent matrix operations upon their inputs. CNTK allows to easily realize and combine popular
+//! model types such as feed-forward DNNs, convolutional nets (CNNs), and recurrent networks
+//! (RNNs/LSTMs). It implements stochastic gradient descent (SGD, error backpropagation) learning
+//! with automatic differentiation. 
+//!
+//! ## Basic concepts
+//! 
+//! CNTK models computation as a graph. Graph is composed of variables and functions.
+//! There are multiple types of variables:
+//!
+//! * Input variable - serves as an input for the computation. It is symbolic variable, with no
+//!   actual value associated to it.
+//! * Output varible - output of an function (cannot be explicitly instatiated in Rust wrapper).
+//! * Parameter - trainable parameter (used for weights of a network).
+//! * Constant - constant input for a function
+//!
+//! Function serve as operations over inputs. They take variable (or several variables) and output
+//! usually one (but sometimes more) variables. Most of them are defined in [ops](/ops/index.html) module.
+//! 
+//! ## Evaluation of functions
+//! 
+//! To evaluate a function we need to bind each input variable to a value. We use a
+//! [DataMap](struct.DataMap.html) structure or datamap macro to create this binding.
+//! We also need to extract output values. To do that, we use Datamap (or outdatamap macro) to
+//! construct binding between output variables and their evaluated values.
+//!
+//! ## Training networks
+//! 
+//! To define a network, we usually end up defining at least two functions. One calculates network
+//! predictions given inputs and other one calculates training loss given inputs and expected
+//! outputs (these two functions usually share a lot of computation). 
+//! To train the network, one has to select a learning algorithm (Learner) and define Trainer.
+//! Then we just give minibatches to Trainer, which uses Learner to learn better weights in network.
+//!
+//! ## Rust Wrapper tidbits
+//!
+//! In C++ there is automatic conversion between variable and function (although converting a
+//! function to variable will fail, if function has more than one output). We also allow this
+//! conversion in Rust wrapper to improve ergonomics of function composition and other things.
+
 #[macro_use]
 extern crate cpp;
 
