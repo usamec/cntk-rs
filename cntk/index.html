@@ -48,8 +48,51 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a class='srclink' href='../src/cntk/lib.rs.html#1-639' title='goto source code'>[src]</a></span></h1>
-<h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+               </span><a class='srclink' href='../src/cntk/lib.rs.html#1-685' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'>
+<h1 id='cntk' class='section-header'><a href='#cntk'>CNTK</a></h1>
+<p>This is the Rust wrapper around Microsoft Congitive Toolkit library.
+The Microsoft Cognitive Toolkit (<a href="https://cntk.ai">https://cntk.ai</a>), is a unified deep-learning toolkit that
+describes neural networks as a series of computational steps via a directed graph. In this
+directed graph, leaf nodes represent input values or network parameters, while other nodes
+represent matrix operations upon their inputs. CNTK allows to easily realize and combine popular
+model types such as feed-forward DNNs, convolutional nets (CNNs), and recurrent networks
+(RNNs/LSTMs). It implements stochastic gradient descent (SGD, error backpropagation) learning
+with automatic differentiation. </p>
+
+<h2 id='basic-concepts' class='section-header'><a href='#basic-concepts'>Basic concepts</a></h2>
+<p>CNTK models computation as a graph. Graph is composed of variables and functions.
+There are multiple types of variables:</p>
+
+<ul>
+<li>Input variable - serves as an input for the computation. It is symbolic variable, with no
+actual value associated to it.</li>
+<li>Output varible - output of an function (cannot be explicitly instatiated in Rust wrapper).</li>
+<li>Parameter - trainable parameter (used for weights of a network).</li>
+<li>Constant - constant input for a function</li>
+</ul>
+
+<p>Function serve as operations over inputs. They take variable (or several variables) and output
+usually one (but sometimes more) variables. Most of them are defined in <a href="/ops/index.html">ops</a> module.</p>
+
+<h2 id='evaluation-of-functions' class='section-header'><a href='#evaluation-of-functions'>Evaluation of functions</a></h2>
+<p>To evaluate a function we need to bind each input variable to a value. We use a
+<a href="struct.DataMap.html">DataMap</a> structure or datamap macro to create this binding.
+We also need to extract output values. To do that, we use Datamap (or outdatamap macro) to
+construct binding between output variables and their evaluated values.</p>
+
+<h2 id='training-networks' class='section-header'><a href='#training-networks'>Training networks</a></h2>
+<p>To define a network, we usually end up defining at least two functions. One calculates network
+predictions given inputs and other one calculates training loss given inputs and expected
+outputs (these two functions usually share a lot of computation). 
+To train the network, one has to select a learning algorithm (Learner) and define Trainer.
+Then we just give minibatches to Trainer, which uses Learner to learn better weights in network.</p>
+
+<h2 id='rust-wrapper-tidbits' class='section-header'><a href='#rust-wrapper-tidbits'>Rust Wrapper tidbits</a></h2>
+<p>In C++ there is automatic conversion between variable and function (although converting a
+function to variable will fail, if function has more than one output). We also allow this
+conversion in Rust wrapper to improve ergonomics of function composition and other things.</p>
+</div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
 <table>
                        <tr class=' module-item'>
                            <td><a class="mod" href="ops/index.html"
