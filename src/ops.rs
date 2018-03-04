@@ -953,7 +953,7 @@ pub fn elu<T: Into<Variable>>(x: T) -> Function {
     Function {payload}
 }
 
-pub fn leaky_relu<T: Into<Variable>>(x: T) -> Function {
+/*pub fn leaky_relu<T: Into<Variable>>(x: T) -> Function {
     let xv = x.into();
     let xpayload: VariableInner = xv.borrow().payload;
     let payload = unsafe {
@@ -975,7 +975,7 @@ pub fn leaky_relu<T: Into<Variable>>(x: T) -> Function {
         payload
     };
     Function {payload}
-}
+}*/
 
 pub fn softplus<T: Into<Variable>>(x: T) -> Function {
     let xv = x.into();

@@ -7,7 +7,7 @@ cpp! {{
   using namespace std;
 }}
 
-pub(super) type AxisInner = [u64; 3usize];
+pub(super) type AxisInner = [u64; 6usize];
 
 pub struct Axis {
     pub(super) payload: AxisInner
